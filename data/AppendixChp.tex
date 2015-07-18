@@ -1,0 +1,130 @@
+\chapter*{附\qquad 录}
+\section*{附录~1\quad	无线脑电放大器帧结构说明文档}
+\vspace{3mm}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{graphic/EEGAmpPackageStruct/1.PNG}
+\end{center}
+
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/EEGAmpPackageStruct/2.PNG}
+\end{center}
+
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/EEGAmpPackageStruct/3.PNG}
+\end{center}
+
+\section*{附录~2\quad 脑电放大器升级适用无线同步触发器所需程序修改说明}
+\songti\zihao{-4}
+
+	增加无线同步触发器以后需要对脑电放大器的初始化程序做一些修改，以使其能与无线同步触发器同步。主要是增加一段握手代码在初始化之后，以及对于脑电放大器开始采样时刻要与同步时间做一些对齐。
+
+	对于自适应参数的无线同步触发器，需要无线脑电放大器在握手同步以后，发送数据以前发送七个字节长的参数数据帧，该包的结构可以参考第\ref{sec:adaptativePac}节的图~\ref{AdaptParaPackage}发送。
+
+	脑电放大器发送的数据包的帧号按照同步以后第一个包为FrameID=0开始计算，比如数据包每100ms给一个，而两边完成同步后的初始时刻是A，那么脑电放大器给出的第一个FrameID为0的数据包应该包含有从A到(A+100)ms的数据。由于在自适应参数情况下，脑电放大器还需要在与无线同步触发器同步以后发送七字节的参数包。因此建议发送的第一个脑电数据包可以是采样从A+100到A+200时间段内的数据以FrameID =1发送，在此之前的A到A+100的时间段内完成同步以后的一些其他操作，比如发送自适应参数等等。
+
+	无线脑电放大器在同步之后其计时超过0xFF个数据包以前必须开始与无线同步触发器的数据发送。由于无线同步触发器在第二次接收到FrameID = 0的包时(第一次接收到FrameID = 0的包时是在同步刚完成以后)会累加器内部计数值以完成FrameID与同步计数值的对应，如果同步以后，脑电放大器没有在第一个FrameID循环结束之前给无线同步触发器发送数据，则会造成FrameID与同步计数值对应错误，也即最终的刺激事件信号标记是错误的。
+
+	以下数据发送情况不会造成上述所述的FrameID对应错误。仍按照上述假设，在同步以后，脑电放大器第一次发送的是包含从(A+255*100)到(A+256*100)ms时间段内FrameID =0xFF的采样数据给无线同步触发器，此后一个数据包FrameID = 0，发送的是从(A+256*100)到(A+257*100)ms内的数据。该情况为最晚一次发送时间，否则对应错误。
+
+	建议实际采样时刻不要出现在数据包所在时间段的端点上，以减少目前程序的刺激事件对准误差。比如40ms采样4个点，采样率为100Hz(10ms采样一次)，那么建议的实际采样点是5ms,15ms,25ms,35ms四个位置。其他情况类似。
+
+\section*{附录~3\quad 放大器端同步测试程序源代码}
+STM32固件库函数在无线脑电放大器端实现同步与仿真数据发送源代码(适用于一导脑电放大器~\cite{Xu2009}，可以配合 自适应无线同步触发器程序使用。与无线同步触发器硬件连接参考图~\ref{EEGAmpWirelessTrigger}。
+
+\textbf{源程序1:Main.c}
+		
+\textbf{源程序二:hw\_{}config.h}
+
+
+
+\textbf{源程序三:中断程序stm32f10x\_{}it.c}
+
+
+
+\section*{附录~4 \quad 无线同步触发器(WirelessTrigger)自适应参数程序固件源代码}
+\label{appendix}
+
+\textbf{源代码一:main.c}
+
+
+
+\textbf{源代码二:hw\_{}config.h}
+
+
+
+\textbf{源代码三:中断程序:stm32f10x\_{}it.c}
+
+
+\newpage
+\section*{附录~5\quad STM32F103RET6使用管脚表}
+\begin{table}[!htd]
+\begin{center}
+\caption{The Pins used in STM32F103RET6(I) \label{PinUsedWirelessTrigger1}}
+
+\noindent\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Pin Name} & \textbf{Function in MCU}  & {\bfseries NOTE}  \\ \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{Power Source}}  \\ \hline
+VDDA & Power Input of ADC & 3.3V from LM1117 \\ \hline
+VDD\_{}1,2,3,4 & Power Input of MCU & 3.3V \\ \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{Digital Ground}}  \\ \hline
+VSS\_{}1,2,3,4 & \rule{0pt}{1ex} &  \rule{0pt}{1ex} \\ \hline
+VSSA &  \rule{0pt}{1ex} &  \rule{0pt}{1ex} \\ \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{Other}}  \\ \hline
+PD0 & OSC\_{}IN	& to active piezo-oscillator\\ \hline
+BOOT0 & BOOT0 & 10K ohm to Ground \\ \hline
+PB2  & BOOT1  & 10K ohm to Ground \\ \hline
+NRST & RESET &  Reset Button \\ \hline 
+\multicolumn{3}{|c|}{\textcolor{blue}{USART}}  \\ \hline
+PA10	& 	USART1\_{}RX	&	USART2USB-TXD  \\ \hline 
+PA9	& 	USART1\_{}TX	&	USART2USB-RXD  \\ \hline 
+PB11 	&	USART3\_{}RX	&	USART2USB-TXD  \\  \hline
+PB10	& 	USART3\_{}TX	&	USART2USB-RXD  \\ \hline 
+PA3  	&	USART2\_{}RX	&	Bluetooth\_{}TXD  \\ \hline
+PA2  	&	USART2\_{}TX	&	Bluetooth\_{}RXD  \\ \hline
+PA1	&	USART2\_{}RTS	&Bluetooth\_{}CTS\\   \hline
+PA0  	&	USART2\_{}CTS	&Bluetooth\_{}RTS   \\  \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{IO pin for Bluetooth}}  \\ \hline
+PA7	&	Output IO	&Bluetooth\_{}CLR	\\ 	\hline
+PA6	&	Input IO	&Bluetooth\_ LNK  \\  \hline
+PA5	&	Output IO	Bluetooth\_ SLP \\  \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{USB}}  \\ \hline
+PA11	&	USBDM	& D$-$		\\  \hline 
+PA12	&	USMDP	& D$+$		\\   \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}[!htd]
+\begin{center}
+\caption{The Pins used in STM32F103RET6(II)  \label{PinUsedWirelessTrigger2}}
+\noindent\begin{tabular}{|c|c|c|}
+\hline
+\textbf{PIn Name} & \textbf{Function on MCU}  & {\bfseries Note}  \\ \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{Parallel Port}}  \\ \hline
+PC0	& 	1	&\rule{0pt}{1ex} \\ \hline
+PC1	&	2  	&\rule{0pt}{1ex} \\ \hline
+PC2	&	3	&\rule{0pt}{1ex} \\ \hline
+PC3	&	4	&\rule{0pt}{1ex} \\ \hline
+PC4	&	5	&\rule{0pt}{1ex} \\ \hline
+PC5	&	6	&\rule{0pt}{1ex} \\ \hline
+PC6	&	7	&\rule{0pt}{1ex} \\ \hline
+PC7	&	8	&\rule{0pt}{1ex} \\ \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{JTAG}}  \\ \hline
+PB4	&	JTAG\_{}TRST	&\rule{0pt}{1ex} \\ \hline
+PA15	&	TDI(Test Data Input)	&\rule{0pt}{1ex} \\ \hline
+PA13	&	TMS(Test Mode Select)	&\rule{0pt}{1ex} \\ \hline
+PA14	&	TCK(TEST Clock)	&\rule{0pt}{1ex} \\ \hline
+Pb3	&	JTDO(TDO)	&\rule{0pt}{1ex} \\ \hline
+\multicolumn{3}{|c|}{\textcolor{blue}{RGB\_{}LED in 5050}}  \\ \hline
+PB8	&	red	&\rule{0pt}{1ex} \\ \hline
+PB9	&	green	&\rule{0pt}{1ex} \\ \hline
+PB5	&	blue	&\rule{0pt}{1ex} \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\listoffigures
+\listoftables
+
+

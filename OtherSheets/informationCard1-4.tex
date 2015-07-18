@@ -1,0 +1,90 @@
+\documentclass[a4paper,cs4size]{ctexrep}
+\usepackage{float}
+\usepackage[top=1in,bottom=1in,left=1in,right=1in]{geometry}
+\usepackage{multirow}
+\usepackage{tabularx}
+%from Internet http://hi.baidu.com/lyunsun/blog/textbf/ad50e354db8537163b293530.html
+%实现居中且列宽固定
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcolumntype{C}[1]{>{\PreserveBackslash\centering}p{#1}}
+\newcolumntype{R}[1]{>{\PreserveBackslash\raggedleft}p{#1}}
+\newcolumntype{L}[1]{>{\PreserveBackslash\raggedright}p{#1}}
+
+\usepackage{eso-pic,calc}
+
+\begin{document}
+\pagestyle{empty}
+
+\begin{center}
+\zihao{-3}\songti{\ziju{1} 北京邮电大学}
+
+{\heiti 本科毕业设计(论文)信息卡}
+\end{center}
+\noindent
+\begin{tabular}{|C{0.2\textwidth}|C{0.25\textwidth}|C{0.06\textwidth}|C{0.12\textwidth}|C{0.11\textwidth}|C{0.1\textwidth}|}
+\hline
+学院 & 信息与通信工程学院 & 专业 & 通信工程 & 班级 & 06123 \\
+\hline
+学生姓名 & 樊高峰 & 学号 & 062367 & 班内序号 & 26 \\ 
+\hline
+指导教师姓名 & 洪波 & 职称 & \multicolumn{3}{c|}{副教授} \\  
+\hline 
+\end{tabular}
+%%%%%%%%%%%%%%%%%画图区%%%%%%%%%%%%%%%%%
+\setlength{\unitlength}{1mm}
+\noindent\begin{picture}(0,0)
+\multiput(0,0)(160,0){2}{\line(0,-1){205}}
+\multiput(0,0)(160,0){2}{\line(0,1){17}}
+\put(0,-205){\line(1,0){160}}
+\end{picture}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\noindent 第1-2周记录:
+
+\textbf{3.1-3.7 第一周 任务书，开题报告；}
+\begin{enumerate}
+\item 完成开题报告和任务书。
+\item 对触发器进行了需求分析，对于其在脑-机接口中的应用进行了探讨。设计了原理图，硬件原理图以及软件流程图。对于系统需使用的各个模块进行了探讨，并初步确定设计方案。主芯片选用STM32F103RBT6，蓝牙模块采用重庆金瓯的BMT0704，USB转USART使用CP2102芯片。设计中预留了一路USB通路用于未来扩展实现USB传输Trigger使用。
+\item 确定了一个学期的工作计划，每周进度安排。
+\item 分析了毕设各个阶段的需求，探讨最后如何验证系统的方案。
+\end{enumerate}
+\textbf{3.8-3.14 第二周 硬件电路设计；STM32 最小系统，蓝牙模块接口电路，并口电路，USB 数据电路和 USB 电源供电；}
+\begin{enumerate}
+\item	修改了硬件原理图中的一处错误。确定PCB尺寸为$40mmX70mm$。
+\item	根据上周的硬件设计在Protel里画Schematic原理图，对两组USART，一个USB端口，一个8bit并口所需使用的端口位置根据芯片封装LQFP64进行了分配，减少交叉连线。
+\item 完成了原理图和最初PCB布局的准备工作，列表归纳了所有使用到的引脚，进行了初步的布局。
+\end{enumerate}
+\noindent\begin{tabularx}{160mm}{|C{0.2\textwidth}|X|C{0.12\textwidth}|C{0.22\textwidth}|}
+\hline
+\multirow{2}{*}{指导教师签字} & \hspace*{0.3\textwidth} & \multirow{2}{*}{日期}	& \multirow{2}{*}{2010 年 4 月 26 日} \\ 
+ & \hspace*{0.3\textwidth} & \hspace*{0.1\textwidth} & \hspace*{0.1\textwidth} \\ \hline
+\end{tabularx}
+\noindent 第3-4周记录：
+
+\textbf{3.15-3.21 第三周 硬件电路设计和 PCB 制版提交；}
+\begin{enumerate}
+\item 进行PCB的布局和布线,修改了PCB的尺寸，从$40mmX70mm$改成\\ \noindent $55mmX95mm$，并确定四个安装孔的位置
+\item 修改原理图部分端口设置，使主要通信线路的连线更短。
+\item 对于Wireless Trigger无线触发器延迟进行了分析，认识到减少无线传输延迟的方差是关键。同时要控制延迟平均时间在10ms以内。思考了该如何测试延迟时间的方法。 
+\end{enumerate}
+%%%%%%%%%%%%%%%%%画图区%%%%%%%%%%%%%%%%%
+\setlength{\unitlength}{1mm}
+\noindent\begin{picture}(0,0)
+\multiput(0,0)(160,0){2}{\line(0,-1){57.5}}
+\multiput(0,0)(160,0){2}{\line(0,1){29.1}}
+\put(0,29.1){\line(1,0){160}}
+\end{picture}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\bfseries 3.22-3.28第四周 STM32系统编程，完成基本元操作程序的编写；     }
+\begin{enumerate}
+\item 用STM32的Firmware library完成了基本的LED亮灭，USART与PC通信，USART使用DMA与PC通信，USART通过DMA使能中断与PC通信，模拟Wireless Trigger最后的数据格式，每次从PC接收10组3bytes的数据后加8pin输入的Trigger返回PC。
+\item 为下周的USB通信编程做准备。
+\end{enumerate}
+\noindent\begin{tabularx}{160mm}{|C{0.2\textwidth}|X|C{0.12\textwidth}|C{0.22\textwidth}|}
+\hline
+\multirow{2}{*}{指导教师签字} & \hspace*{0.3\textwidth} & \multirow{2}{*}{日期}	& \multirow{2}{*}{2010 年 4 月 26 日} \\ 
+ & \hspace*{0.3\textwidth} & \hspace*{0.1\textwidth} & \hspace*{0.1\textwidth} \\ \hline
+\end{tabularx}
+
+\vspace*{2ex}
+\noindent 注：每2周内容记录在一个表格中，双面打印
+\end{document}

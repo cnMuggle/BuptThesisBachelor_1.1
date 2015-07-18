@@ -1,0 +1,102 @@
+\chapter{概述}
+
+本章介绍事件相关电位(ERPs)的概念及其在脑-机接口(Brain Computer Interface)中的应用，并阐明了对事件相关电位(ERPs)无线同步的需求。
+
+\section{事件相关电位ERPs}
+
+事件相关电位(Event Related Potentials)是指由内部或外部刺激所诱发的大脑电生理反应的记录，它区别于大脑自发产生的电信号，并通过EEG头皮脑电的方式进行记录~\footnote{Wikipedia:Event Related Potentials}。事件相关电位能反映人脑的某些高级认知活动，因此广泛应用于心理学,神经科学及其相关领域。
+
+\subsection{脑电信号记录}
+记录头皮EEG脑电的过程可以描述如下：将一对电极与头皮良好电接触，电极的另一端连接到差动放大器，放大器的输出反映电极记录到的一个随时间变化的电压信号，这就是脑电(EEG, electroencephalogram)。正常脑电的幅度一般在$\pm 100\mu V$,频率范围从$0.01$到$40Hz$或更高~\cite{RuggNovember71996}。
+
+\subsection{从脑电信号中获得事件相关电位}
+如果在记录EEG的同时给实验被试一个视觉刺激(比如闪烁)，那么刺激以后记录到的EEG脑电信号就认为是与刺激事件时间锁定的(time-locked to stimulus)。这段时间内的任何电压幅度的变化都可能与大脑对于刺激信号的反应相关。原始的EEG信号包括了很多同时进行的大脑活动的记录，需要对多个试次的脑电EEG数据进行叠加平均以去除与刺激事件不相关的脑电EEG数据。平均后信号就组成了事件相关电位(ERPs)，他们通常表现为刺激时刻之后的一些峰值成分。
+
+事件相关电位相对于刺激事件的精确锁时特性，使事件相关电位技术能提供功能核磁共振(fMRI)等其他技术所不具有的时域精度。
+
+图~\ref{ERPComponents}所示就是叠加平均之后的ERP成分,刺激后第100ms附近的负成分被称为N1或者N100。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[scale = 0.1]{graphic/2000px-ComponentsofERP_svg.png}
+\caption{ERP 成分 \label{ERPComponents}}
+[注意图中负轴向上]
+\end{center}
+\end{figure}
+
+\section{脑-机接口BCI}
+
+	脑-机接口(Brain Computer Interface, BCI)是指在大脑和计算机等外部设备之间建立通信连接的系统。通过直接使用脑电(不单指EEG头皮脑电)而不依赖于脊髓/外周神经系统，该技术为严重残障人士和运动神经损伤病人重建运动控制和恢复交流能力提供了可能~\cite{Wolpaw2000}。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{graphic/BCISystemOverview.PNG}
+\caption{脑机接口基本组成 \label{BCIOverview}}
+[Wolpaw~\cite{Allison2007},2007]
+\end{center}
+\end{figure}
+
+脑机接口系统的基本组成如图~\ref{BCIOverview}所示，按数据流可分为:
+\begin{enumerate}
+\item 信号提取;
+\begin{itemize}
+\item	放大,滤波,AD采样;
+\end{itemize}
+\item 刺激呈现(视觉刺激,听觉刺激);
+\item 信号处理;
+\begin{itemize}
+\item 特征提取(主要是各成分的潜伏期和峰值);
+\end{itemize}
+\item 控制信号输出，信息表达;
+\item 信息反馈。
+\end{enumerate}
+
+\subsection{脑电成分}
+EEG脑电数据由于原始信号幅度小(100uv量级)，且记录的是同时进行的诸多大脑活动，P300信号会被淹没在背景EEG脑电中，图~\ref{EEGSingleTrial}展示了某次实验记录到的与刺激事件同步后的单试次EEG脑电数据，从图中看不到明显的有效信息。这些数据需要进行多个试次的叠加平均才能得到如图~\ref{ERPComponents}所示的事件相关电位。
+
+\subsection{基于P300的脑-机接口系统}
+	1988年，Farwell LA, Donchin E ~\cite{FARWELL1988}提出了采用OddBall范式的基于P300的脑-机接口系统。
+
+结合一般的ERPs实验流程，该系统工作流程可描述如下~\cite{LuckAugust12005} \cite{Donchin2000}(图~\ref{WiredBCI}): P300 BCI系统呈现给实验被试一个6x6矩阵，上面包含了从A到Z的26个字母，1到9的数字以及一个空格键。矩阵以按行或者列的方式随机闪烁，被试目光注视矩阵，这里假设被试想表达字母A，于是当A所在的行或者列闪烁时，被试就将注意力集中于此(比如默记A的闪烁次数)。任何一行或者列闪烁时，呈现刺激矩阵的计算机都会向数据处理计算机发送一个事件码(Marker Code)以与EEG脑电同步~\footnote{这个同步是指把刺激事件码标记到该刺激事件发生的同时记录到的脑电EEG信号上}，这两个数据同步以后再经多次刺激以后EEG脑电数据的叠加处理就能产生事件相关电位(ERPs)。
+
+任何一行或者列的随机闪烁从概率上来说都是一个小概率事件, 由此诱发与人脑高级认知活动相关的P300成分，而被试不想表达的字母所在的行或列之外的行列闪烁则不会诱发大的或者明显的P300成分。这样，数据处理计算机通过确定诱发P300的行和列就能确定被试的选择。
+
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/SystemOverviewOdd.JPG}
+\caption{P300有线脑机接口系统原理图 \label{WiredBCI}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/EEgrecorded.JPG}
+\caption{单试次EEG脑电数据记录 \label{EEGSingleTrial}}
+[图中负轴向上，每个框代表一个刺激信号之后大约800ms内记录到的脑电EEG数据]
+\end{center}
+\end{figure}
+
+\subsection{脑-机接口现状概述}
+
+	脑-机接口技术分为有创脑-机接口(Invasive BCI)和无创脑-机接口(Non-invasive BCI)。主要区别是记录信号的位置不同，有创脑机接口主要记录的是神经元的发放率(Firing Rate)或ECoG(大脑皮层之上头骨以下的脑电记录)，由于没有颅骨阻挡，其信号质量比EEG脑电要好，可以采集到更高频率的信号，提供更快的通信速度，但由于人道和技术成熟度的原因，目前有创脑-机接口主要还是在动物实验(猩猩)阶段或者在开颅癫痫病人身上进行。本文主要讨论的是无创脑-机接口，头皮EEG脑电记录没有风险，使用门槛低，近年来发展已比较成熟，基于Oddball范式的P300脑-机接口就是经典的范例，已有研究证明基于P300的脑-机接口系统可以被大部分人使用~\cite{FARWELL1988}，一个非实时(off-line)的P300脑-机接口系统可以达到每分钟7.8个字符的通信速率，正确率为$80\% $~\cite{Donchin2000}。附录文献翻译是一片有关脑机接口技术的综述，提供有关该领域近几年研究的一些进展和对未来的展望。
+
+\subsection{ERP无线同步需求分析}
+
+早期的ERP实验都是在心理学或者神经科学实验室完成的，为了得到比较好的数据，使用苛刻的实验条件~\cite{LuckAugust12005}。
+
+脑-机接口技术的提出，就是为了解决严重肌肉神经功能失调病人和残障人士的沟通交流和日常生活问题~\cite{Allison2007}。这就决定了脑-机接口技术不能限制在实验室的狭小空间内应用。基于P300的脑机接口系统~\cite{FARWELL1988}\cite{Krusienski2008}的应用是一个很大的进步，其他方面的进展还有基于听觉ERP的脑机接口系统研究~\cite{Hinterberger2004}\cite{Hong2010}，基于SSVEP的脑机接口系统~\cite{Wang2006}，不同于使用ERP技术的脑机接口系统，SSVEP信号主要通过刺激产生不同的频率来完成通信。另外，证明神经元群能够控制机器手的研究也早在1999年就出现~\cite{Chapin1999}。
+
+	目前还没有无线的ERP系统解决方案。如图~\ref{WiredBCI}所示的系统是一般ERP系统的典型数据流，图中所示的三个连接~\footnote{1,脑电信号到脑电放大器(模拟量);2,脑电数据到数据处理计算机(数字量);3,刺激事件码到数据处理计算机}都是通过有线连接来完成的，当这些设备用于日常生活时就显得有些不便，如何才能提供简单又便捷的使用方式？使用无线传输是最容易想到的解决方案，目前这方面已有一些工作~\cite{Chumerin2009}\cite{Lin2008}，另外还包括商用的无线脑电放大器解决方案~\footnote{http://www.neuroscan.com/; http://www.gtec.at/content.htm}。这些方案都提供了脑电数据的无线传输，可以完成传统的基于SSVEP的脑机接口应用~\cite{Xu2009}，但是并没有解决无线传输中刺激信号与EEG脑电同步的问题，也即目前还没有无线连接的ERPs脑-机接口系统解决方案。
+
+	本毕设的目标就是要提供事件相关电位(ERPs)的无线同步方案。
+\section{事件相关电位(ERPs)无线同步难点分析}
+
+这里提出两套方案用于实现事件相关电位(ERPs)的无线同步。首先对于原来的有线ERP同步方案，如图~\ref{WiredBCI}所示，把数据从放大器无线直接传到计算机，计算机给EEG脑电数据上标记的事件同步信号就会由于无线延迟偏移正确的位置，该偏移主要受无线传输的平均延迟和标准差影响，其中标准差的影响更大。平均延迟可以对每次刺激事件信号标记做同样的平移消除。但是传输延迟标准差或波动对于每次数据传输都不同，是无法消除的。
+\begin{itemize}
+\item 一种解决方法是使用无线传输标准差比较小的设备，本毕设工作中所使用的无线蓝牙模块无法达到如此高的性能，而且相比较第二种方案，其在成本与实现上没有超越之处。相关内容在第四章 讨论中论述；
+\item 另一个方案使用同步子钟，经证明可以达到很高的精度，误差主要受晶振的频率漂移限制，该方案为最终方案在第二章 协议设计 和 第三章 系统实现中详细介绍。
+\end{itemize}
+
+本论文的结构如下：第二章和第三章介绍最终系统方案的设计和协议，第四章给出相关结论，第五章讨论把在方案实现过程中出现的一些探索性过程予以整理。
+

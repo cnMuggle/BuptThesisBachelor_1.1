@@ -1,0 +1,209 @@
+\documentclass[a4paper,oneside,xetex]{ctexbook}
+\usepackage[colorlinks,bookmarks]{hyperref}
+\usepackage{BUPTthesisBachelor}
+%前面几页不需要页眉页脚
+\pagestyle{empty}
+\begin{document}
+\chapter{ReadMe on 2012}
+不知道是不是因为我在上一次readme里说错话了，回头看发现自己当年说的有些话确实是偏激。今日当我要重新使用Latex的时候，才发现这个东西的用处。
+
+首先纠正之前的一些错误。
+\begin{enumerate}
+\item 插入图片什么的，还是LaTex好用，我待会儿解释给你看。
+\item 现在有工具可以将excel的表格自动转换成LaTex的代码，只是没有excel的颜色。
+\item MiKtex和TexLive应该都可以支持编译的，这个是我自己后来试过的。这次上来也是试着重新编译了一遍，解决了一个\verb*|option clash for package color|的Bug.
+\end{enumerate}
+
+毕业快两年了，这期间有人问过我这个模板的事情，也有北邮的研究生哥哥姐姐有人想整合本科生，研究生还有博士论文模板的，做成清华的模板那样猛！只是确实是像wang xu学长说的那样，过了这个村就没这个店了，我估计以后我没事也不会跑过来写东西。这次是真的因为硕士毕业，需要排格式。想到那些word下面烦人的控制，我还是更倾向于使用LaTex。只是模板整合的事情，还是要靠那些要毕业的同学来做了。
+
+北邮现在的模板还是大家各自为政，而且很多格式的东西都没有统一，是在高层实现的。初学者用起来很不方便，需要注意这儿，注意那儿的。这一点参考一下清华THUTHESIS就可以知道区别。而且人家的论坛相当活跃，一直
+
+说道LaTex优势，我不得不扇自己两个嘴巴子。东西到用时方恨少。这个东西除了可以装牛逼以外。确实有他的长处。举个简单的例子来说。如果你有1000张图片需要排版放到书里，而这些文件已经有统一意志的文件名了，或者在一个目录下。我用Perl+LaTex可以很轻松的把所有的图片都导入PDF文档，参见文档中的\verb*|SSTL15_135_DCI_NONDCI_Report.pdf|.如果让你用WORD排，就可以痛痛快快的去死了。
+
+本来想多说点，无奈时间不够，思路又很乱。希望能达到今天的目的：
+\begin{itemize}
+\item 重新编译了文件，去除了一个bug,现在已经可以在MiKtex 2.9下编译通过
+\item 多一门工具，多一项选择。整合模板的任务就靠后人完成了
+\item 给了一个体现LaTex批量数据处理显优势的例子，文档\verb*|SSTL15_135_DCI_NONDCI_Report.pdf|
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\chapter{ReadMe on 2010}
+\section{Abstract}
+本文简单介绍了本北京邮电大学本科毕设论文模版的写作动机和使用，本文作者并不想一蹴而
+就的完成所有工作，所以你现在看到的东西可能并不完善，比如像本说明就是不是用LaTeX生成
+的。
+\section{Introduction}
+最早想学LaTex是大三下，忙着准备出国的间隙，Ada突然一个gtalk问我，Muggle，你会LaTex么?
+
+你会LaTex么?不会!但问者无心，听者有意。我当时在想自己最近都在干嘛，这个东西不是早该学
+会了么?做学术的人估计早晚都要用到这么个破烂玩意儿吧(至少我现在觉得这是个破烂玩意儿)
+
+毕业有几个月了，很快下一批的北邮学子又要离开学校，我的本科毕设论文顺利而又简单的通过
+的答辩，论文毕设模版也通过了学校的考验，想趁下一年毕业班的学生们开始写论文之前完成这
+个模板的修改已经说明工作，也算是了却心愿。学习LaTeX我只参考了一本书叫lshort，卓越上卖
+的那本LaTeX的书太老， 我买了看了觉得还是用lshort就可以了，大家可以从网上download这个
+pdf然后拿到学八或者其他地方打印成书，就跟装订论文那样。
+
+LaTex简单来说就是一个类似Windows Office Word的工具软件，有了他，你可以把文字直接编译成
+Pdf，然后加上页眉，页脚还有标题，超链接，最重要的还有论文引用之类的特性。但他的使用不
+像Word那么直接，需要你像写C代码一样的敲控制命令，然后每次敲完之后还需要编译一下才能
+生成最后的PDF文件。
+
+由于LaTex历史久远，很超前(不然也不会现在还用他)，大部分的会议和期刊都接受LaTex的论文提
+交(大部分也包括word)，所以在学术圈，这个东西的影响力还是有的。由于本文主要介绍北京邮
+电大学本科毕业设计论文的LaTex模版，对其他的背景就不做过多的渲染。
+\section{Environment}
+你现在看到的这个就是本人在北京邮电大学2010年本科毕设期间完成的LaTex论文模版，中文是基
+于ctex宏包, 不同于CJK或者类似的中文支持环境的地方是，该宏包整合了中文LaTex开发环境，包
+括了xeCJK, zhspacing,基于LuaTeX的中文支持。相关介绍请移步
+
+\href{http://code.google.com/p/ctex-kit/}{http://code.google.com/p/ctex-kit/}
+
+我那个时候在水木的LaTex版块以及CTex社区逛的时候，他们推荐的中文LaTex使用环境就是基于
+ctex宏包的，所以我相信这个宏包是目前最方便好用的中文LaTex开发环境。
+
+我所有的编译都是在Windows下用CTeX完成的，MikTeX下ctex宏包似乎是有问题，另外还有一些
+字体，比如simkai,simfang字体需要安装，但好像用CTeX的时候都没有这些问题，其他都可以通过
+CTeX的环境自动完成，由于我使用了vim在windows下编译latex文件，我实际上使用的是如下两条
+指令进行编译的: xelatex和bibtex
+
+倒是Linux下的TexLive，不知道怎么回事，是没有宏包管理工具么?情况是这样的：
+
+ctex宏包是中文CTeC社区开发和维护的，就像众多的Linux开源项目一样，他们的更新可能很快
+也很慢，LaTex的默认宏包使不包括这么个新出现的中文宏包的，因此当我在latex源文件中使用这
+个宏包相关的命令的时候，这个宏包需要能被LaTex的路径索引到，MikTeX下面提供了包管理工
+具，有点像apt-get这样的概念，当我编译latex的tex源文件的时候，MikTeX会自动让你选择从网上
+哪个源下载缺失的宏包，但是，我不知道是不是由于Linux一贯的麻烦和not user friendly, 我当时在
+linux下编译这几个中文tex后缀文件的时候，TexLive相当不合作~具体细节我不清楚，如有愿意折
+腾的同学可以自己Google或者看一下TeXLive的相关支持。
+
+我在这里不提太多Linux的东西，我希望每个读到这篇文章，希望使用LaTex作为自己工具的人
+一个相对容易的入门。就像我当初使用LaTex一样，在Windows下面使用，除了关注像C一样的
+latex代码以外，其他的工作都通过MiKTeX这个IDE环境来完成。
+\section{My Position}
+在介绍相关LaTex，特别是中文LaTex环境在北京邮电大学本科毕设论文写作中的使用之前，让我
+再阐明一下我的观点。
+
+不要为了一个工具而忘了自己真正应该做的事。LaTex只是一个工具，就好比Linux，也就像
+Linux那样，这个工具并不太user-friendly。所以如果你不喜欢，完全可以用Microsoft Word来完成
+毕设论文的写作，有人会告诉你使用LaTex能省去排版的麻烦，使你专注于文章的写作，我不这么
+认为。
+\begin{enumerate}
+\item  对于一个初学者而言，当你已经习惯于Word的界面， 再从一段有控制字符的代码当中
+识别自己的内容时，并不是一件很愉快的事情，虽然最终生成的PDF文档跟word有一拼。
+\item LaTex所实现的功能几乎用Word都能实现，就像之前说的，什么超链接啊，论文引用
+啊。大概就是PDF里面的书签我还没查过Word的实现方式，但那东西有没有都无所谓。如果你关
+注那些既能在Windows下使用，还能在Linux下使用，LaTex确实是比Windows Word更胜一筹。
+\item 用LaTex排版所花的时间并不少。即使是对编写一本书或者是长文章，因为LaTex在排版
+短文章上的一些优势并不明显，我这么觉得。首先LaTex的tex文件格式，就像你打开一个C后缀的
+源代码一样，不是所有IDE工具都像Word那样提供语法修改功能的，而且文章写长了之后谁还能
+保证自己一个错都没有。每次我都是现在Word里面写好东西，看语法啥的没有错误了再插入到
+LaTex的格式当中去，即使这样，我也还需要花很多时间，去处理，比如图片，表格，这些本来在
+Word当中直接拖拽就能实现的简单功能，在LaTex下有时就需要好几次的编译和核对。我写毕设
+论文用LaTex的这个模板，当时就花了一个通宵，在我写完所有的文字之后，进行文字的插入，图
+片的索引，错误的修改，特殊字符的转义等等。我想如果我用Word去排版，估计费的时间也差
+不多。当然也不是没有省事的地方，比如对于格式的某些要求，开头空两格，各种标题的字体大
+小，在LaTex下都可以通过类似全局变量的形式设置，在插入文字的时候就可以不用去关心这些细
+节，后期修改起来确实是没怎么返工。
+\end{enumerate}
+所以，基于以上几点，我并不是很推荐，特别是那些小白同学使用LaTeX排版他们的本科毕设论
+文，有时间还是多干点别的有意义的事情吧，就像Yegle同学(你们现在用的byr bt的界面就出自此
+人之手)说的: 折腾这玩意儿能讨到老婆么？
+
+\section{Usage}
+这里简单介绍一下本模板的结构和使用。
+本文并不想要一蹴而就的完成对本LaTeX模板的所有说明和解释工作，我会根据各位的使用反馈
+以及自己的时间安排慢慢完善这个模板，当然跟有多少人用也有很大的关系。
+\subsection{文件目录结构}
+\begin{description}
+\item ------BuptThesisBachelor\_1.0
+\begin{itemize}
+\item ---data
+
+store the separate chapters,各章的内容tex文件
+\item ---excellentTemplate
+优秀论文模版
+\item ---figures
+
+我自己使用的图片
+\item ---graphic
+bupt相关的图片
+\item ---otherSheets
+
+其他表格，比如开题报告的LaTex模版(实现方式很吐槽，我再也不
+会干第二次了，只有信息卡和开题报告使用了LaTeX实现，任务书，答辩决议书以及中期都还是
+word完成的)
+\item ---ref
+
+论文引用
+\item ---brain computer interface systemProgress and prospect.pdf
+this is the paper appeared in my Bachelor Thesis
+\item ---BUPTthesisBachelor.sty
+sty file, used in main.tex or mainPrint.tex
+\item ---main.pdf
+Pdf of the final Thesis in color
+\item ---main.tex
+\item ---mainPrint.pdf
+Pdf of the final Thesis in monochrome, print-friendly
+\item ---mainPrint.tex
+---Readme\_BUPTBachelorLaTeX.pdf
+\end{itemize}
+\end{description}
+\section{编译方法}
+如果使用MikTeX自带的TexWork编译环境，请选择XeLaTex+MakeIndex+BibTeX选项进行编译，
+额外的，我讲一下分步骤编译的方法，对这个不敢兴趣的同学可以移步下一个section或者chapter,
+用上面的命令就足够你编译的了。我是在vim下调用命令行编译的，所以想简单说一下。
+比如工作目录在\verb*|F:\FanDocument\Code\LaTex\BuptThesisBachelor_1.0|下
+1.在完成main.tex以后,从windows左下角执行run,输入cmd进入命令行界面
+2. 输入 F: 然后回车进入F盘, \verb*|cd FanDocument\Code\LaTex\BuptThesisBachelor_1.0| 然后回
+车进入工作目录
+3. 输入\verb*|xelatex main.tex| 然后回车，系统就会开始进行编译，第一次的时候会下载一些宏
+包,MiKTeX都会帮你搞定
+4. 如果没有出错，由于索引的问题，需要再执行xelatex main (不加.tex后缀)然后再执行
+bibtex main ，最后还要再执行xelatex main , bibtex命令会调入论文引用, xelatex之后会给出一些
+warning, 一直编译到没有warning为止就可以了。
+图片和表格
+图片的插入使用如下代码，此为第一章第一幅图片的LaTeX代码，具体含义可以参考Lshort或者通
+过我的具体实现代码来理解。
+\begin{verbatim*}
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[scale = 0.1]{graphic/2000px-ComponentsofERP\_svg.png}
+\caption{ERP 成分 \label{ERPComponents}}
+[注意图中负轴向上]
+\end{center}
+\end{figure}
+\end{verbatim*}
+我只使用了两张表格，在附录里，参见\verb*|\BuptThesisBachelor_1.0\data\AppendixChp.tex|, 搜索关键字
+table,由于代码有点长，并且LaTeX的表格在我看来真是难用啊，所以就不讲太多了，只是注意表
+格的标题和图片标题的位置在学校论文要求里面是有提及的。
+论文和索引
+论文引用使用JabRef进行管理,如果你明白，可以把这个工具理解为EndNote, 我在本论文中使用了
+IEEE 的索引显示格式，其实我也不知道是不是符合学校给出的那个格式，反正老师看完之后啥也
+没说，就算过了呗。
+Validation
+本模板，特别是本人的毕设论文，已经经过北京邮电大学信息与通信工程学院侯秀英老师的审
+核，她认为本论文的格式已经没有问题了。如果各位在使用中发现任何与学校要求不符合的地
+方，欢迎到\href{http://code.google.com/p/buptthesis-bachelor/}{http://code.google.com/p/buptthesis-bachelor/} complain或者给我发邮件\verb*|cnMuggle at gmail dot com|。哈哈，有时间我就会去看的。
+
+另外再上传之前我也重新用MikTeX在windows下面编译了一遍，可以通过。需要ctex宏包的
+linuxer请移步\href{http://tug.ctan.org/tex-archive/language/chinese/ctex/}{http://tug.ctan.org/tex-archive/language/chinese/ctex/} 下载，具体安放位置我不太清楚~
+
+\end{document}
+

@@ -1,0 +1,498 @@
+\chapter[方法-系统实现]{方法-脑电放大器无线同步触发器(Wireless Trigger)系统实现\label{chp:implementation}}
+
+本章主要介绍了脑电放大器无线同步触发器(Wireless Trigger)的系统实现，包括硬件的PCB制版和软件编程。实现的无线同步触发器系统可以完成硬件握手同步，接收来自脑电放大器的无线数据，接收刺激事件信号，并在标记刺激事件码后通过USB将数据返回给计算机。
+
+\section{硬件系统}
+
+\subsection{硬件概况}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/PCB.jpg}
+\caption{硬件系统图 \label{hardwarePCB}}
+\end{center}
+\end{figure}
+
+如图~\ref{hardwarePCB}所示，无线同步触发器(Wireless Trigger)由以下主要部分组成：
+\begin{itemize}
+\item 	蓝牙模块(右侧红色方框)，接收无线EEG脑电数据；
+\item	ARM微控制器芯片和精度为50PPM的8MHz有源晶振(左下方绿色圆框);
+\item  串口(USART)转USB芯片解决方案(蓝牙左上侧粉红方框);
+\item 	并口(中下方蓝色不规则方框),接收刺激事件信号Trigger。
+\end{itemize}
+
+其他还包括：
+\begin{itemize}
+\item 显示系统状态的LED指示灯(左上角黄色圆框);
+\item 调试测试端口和同步握手引脚端口(左侧圆孔区域);
+\item 5V转3.3V电压芯片(ARM芯片与蓝牙模块之间)。
+\end{itemize}
+
+	其各部分之间的连接关系如图~\ref{ComponentConn}所示。ARM芯片作为主控制单元控制时序，接收蓝牙模块从USART口发来的数据，并口读刺激事件信号，然后将数据整合后通过USB口返回计算机；考虑到USB协议的复杂性，采用了硬件的USART转USB芯片解决方案完成USB的实现。并口的数据通过微控制器上的8个IO口读取。此外，从图中还可以看到有两路USB通道，另外一路USB通道作为以后扩展功能预留，暂时不使用。
+
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{graphic/componentConnect.PNG}
+\caption{硬件原理图 \label{ComponentConn}}
+\end{center}
+\end{figure}
+
+\subsection{微控制器}
+	ARM微控制器采用意法半导体的STM32F103系列芯片，该芯片属于ARM Cortex M3系列，强调了操作的确定性以及性能，价格和功耗的平衡。STM32F103增强型系列芯片主频72MHz，具有1.25DMIPS/MHz的指令执行速率，此外还有单周期乘法指令和硬件除法指令等。在软件方面也提供了STM32固件库和完整开发例程，方便应用开发。本设计所使用的STM32F103RET6芯片具有5个USART端口，512Kbytes的片上Flash和48Kbytes的SRAM，LQFP64引脚封装，电源电压3.3V带部分管脚具有5V输入承受能力，能满足并口数据输入的要求。
+
+	片上STM32的原理图如图~\ref{MCUSche}，图~\ref{MCUScheResetBoot}所示的左侧有电阻连接的三个管脚分别是两个boot管脚和一个Reset复位管脚，正常系统工作时需要将Reset引脚拉高~\footnote{参考STM32 Reference Mannual RM0008},另外两个boot引脚的电平高低将决定系统上电时加载程序的区域，本系统中都通过10K电阻接地，表示上电启动后使用FLASH存储器。右下方为8MHz的有源晶振原理图，JTAG端口是STM32的标准配置，其引脚的原理图连接在右中部，在这里简化了JTAG的管脚。右上方原理图是STM32的芯片供电。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{graphic/MCU_Schematic.PNG}
+\caption{微控制器原理图 \label{MCUSche}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{graphic/MCU_ResetAndBoot.PNG}
+\caption{微控制器复位和初始化引脚连接原理图 \label{MCUScheResetBoot}}
+\end{center}
+\end{figure}
+
+\subsection{USART转USB芯片解决方案}
+	USB被广泛应用在各种计算机及电子设备上，但是其软件实现复杂，为了简化问题，本设计中采用了CP2102的单芯片USART转USB解决方案完成USART协议到USB协议的转换，该芯片提供了内部完整的USB接收/发送协议不需要额外分立元件的支持，也不要外部时钟电路，图~\ref{USART2USBSch}所示是USART转USB的原理图，其中的电容和电阻起滤波和限流的作用。此外，在软件上也提供了计算机端的串口和USB的API函数，大大加快了开发时间。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{graphic/CP2102_Schematic.PNG}
+\caption{USART转USB芯片原理图 \label{USART2USBSch}}
+\end{center}
+\end{figure}
+
+图~\ref{USART2USBSch}中到微控制器USART端口的数据通道是管脚PB10和PB11，到USB的数据传输通道是CP2102的4和5引脚引出的D+和D-。USB传输的是差分信号，该信号先经过一个ESD保护芯片USBLC6后到达USB端口，由于现在USB供电很方便，而且CP2102也设计了3.3V电压输出能力，因此保留了CP2102引脚6上的电路作为输出端使用，但由于其最大供电电流为100mA，实际电路的3.3V供电由另一个电源模块LM1117经5V转换后提供最大800mA的输出能力。
+
+\subsection{蓝牙模块\label{subsec:buletooth}}
+	蓝牙模块采用了重庆金瓯的串口USART蓝牙模块BTM0704，该模块兼容蓝牙规范2.1+EDR，有自动节能模式，支持从9600bps到921600bps的波特率。底层协议支持前向纠错(1/3FEC和2/3FEC)和数据反馈重传(ARQ)。连接原理图如图~\ref{BlueToothConn}所示，CLR和SLP分别为蓝牙模块的状态切换开关和睡眠唤醒开关，当置高时蓝牙模块正常工作，LNK为状态输出管脚，当为高电平时表示蓝牙模块已经成功与其他蓝牙模块建立连接。3到6管脚的CTS，RTS，RXD和TXD为硬件流控的USART端口。
+
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{graphic/BlueTooth_Schematic.PNG}
+\caption{蓝牙模块连接原理图 \label{BlueToothConn}}
+\end{center}
+\end{figure}
+
+\subsection{电源电路}
+	系统由USB端口提供5V电压，经LM1117稳压至3.3V输出，LM1117芯片具有800mA输出能力和 的电压精度，而且电路简单。原理图如图~\ref{PowerSch}所示。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{graphic/PowerSource.PNG}
+\caption{电源芯片原理图 \label{PowerSch}}
+\end{center}
+\end{figure}
+
+\section{软件设计}
+
+	STM32在软件开发方面有很好的支持，意法半导体提供了STM32固件库以及相应的例程。无线同步触发器的代码使用基于C的STM32固件库函数编写。本部分介绍了无线同步触发器软件设计的算法，以流程图和编程思路为主，\ref{sec:STM32Firmware}节具体介绍了部分代码的实现。
+
+\subsection{系统软件流程}
+	要实现无线同步触发，根据 第\ref{chp:protocol}章 协议设计 和 第\ref{chp:implementation}章 硬件系统的描述，需要经过如下几个步骤：
+\begin{enumerate}
+\item 	同步握手，子钟启动和对准；
+\item 	EEG脑电数据无线接收；
+\item 	刺激事件码(Trigger)采集；
+\item 	数据同步过程(将刺激同步信号标记到相应发生该刺激时的EEG脑电信号上)；
+\item	数据返回计算机。
+\end{enumerate}
+
+\subsection{握手协议实现}
+	子钟对准协议在第\ref{chp:protocol}章阐述，其软件流程如图~\ref{hardhandshankeSoftwareFlow}，具体软件实现时在输入端读取到正确电平以后会再延迟15到20ms以再次确认输入电平，一方面作为软件防抖措施，另一方面也给确定输入状态后输出状态做了缓冲，为同步方从输出状态转到检测输入状态保留了时间。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/handshakeSoftwareFlow.png}
+\caption{握手软件流程图 \label{hardhandshankeSoftwareFlow}}
+\end{center}
+\end{figure}
+
+\subsection{EEG脑电数据无线接收}
+为了防止无线数据传输导致数据包丢失，系统中设置了两个数组作为乒乓数组，轮流存储通过蓝牙接收到数据，如图~\ref{StreamLineArray}所示，数组p在完成无线脑电数据DMA接收以后立即由数组q代替进行数据接收，而数组p中的数据则可以进行处理。DMA接收数据使微控制器能在收数据的同时对数据进行处理，完成流水线作业。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/PqArrayStreamLine.PNG}
+\caption{乒乓数组接收脑电无线数据-流水线 \label{StreamLineArray}}
+\end{center}
+\end{figure}
+
+\subsection{SysTick计数-同步的基础\label{sec:systick}}
+	相同的基准时钟是实现不同平台软件之间移植的基础，STM32中有一个专门的计数器SysTick负责这个基准时钟的计数，而本系统则利用了这个计数器来产生0.1ms一次的中断计数，在中断中完成同步计数器值增加。这部分可以按如下方式工作：首先设定系统时钟为72MHz以后，利用STM32提供的固件库函数，设定Systick的自动重载值为7200(72MHz的主频振荡7200次即为0.1ms)。另外一个在此处完成的操作是从并口读取来自刺激呈现系统的刺激事件信号，也即本系统的Trigger，这样的软件设计保证了刺激事件精度最高为0.1ms/次。
+
+\subsection{刺激事件码(Trigger)读取}
+	如第\ref{sec:systick}节所述，在每次递增系统同步计数器的值以后完成一次并口刺激事件码的读取，这里还有一个实际问题需要处理。并口读到的有效刺激信号是一个有一定宽度的高电平，通常的持续时间在10到50ms之间，以15ms为例，如果每0.1ms读取一次并口数据，那么15ms的一个高电平就会被读取150次，然而实际上这150个高电平只是一个刺激事件信号(Trigger) 。因此在软件上需要做如下处理使这连续的150个刺激信号被认为是1个刺激事件信号。\textbf{操作如下：}
+
+	当在读取到一个高电平时，比较上一次读取到高电平信号时的同步计数器值x(x初始化为0)是否是当前读取到高电平时的同步计数器值 减1，如果是，则忽略这个高电平，否则将这个高电平及该时刻同步计数器值保存，最后一步是不管这个高电平是否被忽略，都将当前的同步计数器值保存为x，这样当一个高电平结束时，其被记录为Trigger的信号是这个Trigger第一个高电平出现时的同步计数器值，而x将保存该高电平最后一个时刻的同步计数器值。只要两个刺激事件信号之间有0.1ms的低电平间隔，那么就可以判断为两个不同的刺激同步信号。该过程的流程图如图~\ref{readTrigger} 所示。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{graphic/ReadTriggerSoftFlow.png}
+\caption{刺激事件信号不重复读取软件流程图 \label{readTrigger}}
+\end{center}
+\end{figure}
+
+\subsection{脑电EEG信号与Trigger同步\label{EEGSynTrigger}}
+
+	在第\ref{chp:protocol}章 协议设计 中已经论述过了脑电放大器的数据包帧号与无线同步触发器的同步计数值之间的映射关系。这一部分讨论具体实现。
+
+	每次DMA传输都会接收到一个完整的数据包，有帧头和数据信息，在非自适应设计下，进行刺激事件码同步的双方已知对方的通信参数，自适应情况下，无线同步触发器通过接收自适应参数帧得到这些参数。无线同步触发器根据接收到的帧号计算出其对应的同步计数值范围，然后根据每个包中的采样点数得出每个采样点对应的同步计数值的个数，把相应的同步刺激信号标记到对应的EEG脑电采样点数据后面。
+
+	以记录40ms数据，帧号(FrameID) 为1的数据包为例，假设该包只有4个采样点，即10ms一次采样，100Hz采样速率；每个采样点两通道数据, 根据图~\ref{CorrespondingFIDCounter}给出的对应关系，FrameID为1的包对应的是400到799的计数值，图~\ref{TriggerPackage1}给出了每个数据通道的采样时刻和所对应的计数值范围。
+
+如果程序查询存储刺激事件的数组发现一个计数值为659的刺激事件信号。从图~\ref{TriggerPackage1}中可以很容易的确定出插入该刺激事件的位置为600~700数字后面的Trigger通道。
+
+计算过程如下:
+\begin{itemize}
+\item 计算每个采样点平均分配到的计数值
+\begin{equation}
+	\frac{400}{4} = 100
+\end{equation}
+\item 刺激事件时刻相对于该包起始时刻的偏移与上式的商
+\begin{equation}
+	\frac{659 - 400}{ 100 } = 2 
+\end{equation}
+\end{itemize}
+
+因此插入刺激事件的位置就是从该数据包第一个采样点开始的第(2 + 1)个采样时刻。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/TriggerPackageStruct.PNG}
+\caption{带Trigger帧号为1的数据包 \label{TriggerPackage1}}
+[图中未完全表示帧头信息，只给出帧号字段]
+\end{center}
+\end{figure}
+
+	操作过程如下：
+\begin{enumerate}
+\item 	Trigger数组中是否有刺激事件信号?有则到2，否则到7;
+\item 	根据当前接收到的数据包的FrameID，该刺激事件信号是否在其FrameID映射的计数值范围内?如果是则到3，否则到7;
+\item 	刺激事件信号的记录时间减去该数据包帧号对应的起始时间,本例中为$659 – 400 = 259$;
+\item 	已知十个计数同步值对应一个采样点($400/4 =100$), 把上一步的结果除以10得商和余数$259 \div 100 = 2$余$29$;
+\item	将该刺激事件信号标记到该数据包从第一个采样点开始的第$2+1$个采样点上; 
+\item	返回1继续判断刺激事件信号数组中是否还有Trigger;
+\item	函数返回。
+\end{enumerate}
+
+\subsection{从数据接收缓冲区到数据发送缓冲区}
+无线接收到的脑电EEG数据在由乒乓数组接收以后，需要在移动到发送缓冲区时在每个采样点后面留出一个通道存放刺激事件。该操作原本尝试使用DMA的Memory2Memory方式完成，实际测试之后发现该过程启动速度达到肉眼可辨(需要秒级单位完成)，后改用For循环的方式完成。
+
+仍以帧号为1的数据包为例，图~\ref{Receive2Send}展示了从数据接收到插入刺激事件信号发送的全过程，每通道数据全部用11 11 11 11表示，所有数字均为\textbf{16进制},在发送缓冲区中用下划线标明同一个数据通道的数据。
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{graphic/Receive2SendBuffer.PNG}
+\caption{脑电数据从接收缓冲区到发送缓冲区的移动 \label{Receive2Send}}
+[发送缓冲区中所示唯一的一个01即为从并口插入的刺激事件码]
+\end{center}
+\end{figure}
+
+
+\section{STM32固件库编程\label{sec:STM32Firmware}}
+	本部分主要描述了如何使用STM32固件库编写系统固件。为了能涉及STM32固件库编程的多个方面，同时又具有完整性，这里把无线同步触发器如何接收EEG脑电数据的过程分解为几个部分。这个过程是一个使能USART串口并通过DMA方式传输EEG数据，在数据传输结束后进入中断进行数据处理的过程。
+
+\subsection{系统初始化}
+类似一般的嵌入式或者单片机，STM32的工作过程可简单分为三个步骤:
+\begin{itemize}
+\item	系统时钟初始化；
+\item	外设、中断、DMA等初始化；
+\item	正常的数据流操作；
+\end{itemize}
+	其中STM32的时钟初始化过程需要调用PLL锁相环使外部时钟倍频以达到72MHz的最高频率。此外STM32的系统设计中涉及到三个总线时钟，分别是AHB，APB1和APB2总线，其中APB1的最高总线频率只能达到36MHz/24MHz，另外两条总线的数据频率可以为72MHz/48MHz。初始化系统时钟的代码比较长，在此不予展示，参见\textit{附录\ref{appendix}}。由于不同的外设连接在有不同时钟频率的总线上，而时钟又是数字电路工作的前提条件，所以在初始化外设前需要首先使能系统时钟和该外设时钟。STM32的固件库提供了非常直观的函数，比如代码
+\begin{center}
+  \verb|RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);|
+\end{center}
+
+使能了挂载在APB2总线上的USART1的时钟：
+
+	对于STM的外设初始化，STM32固件库使用了C语言结构体(struct)来设置参数，避免了以往用C或者汇编配置外设直接写寄存器的混乱状况。以IO口的端口初始化为例，首先定义结构体变量实例：
+\begin{center}
+\verb|GPIO_InitTypeDef  GPIO_InitStructure;|
+\end{center}
+IO端口有两个参数：端口速率和输入输出模式，如下代码使能端口A的引脚9为最高速率50MHz的推挽输出端口，其他可设置参数可以参考STM32F10xFWLib(STM32固件库)。
+ \textit{\color{blue}{//IO口9}}
+
+\verb|GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;| 
+
+\textit{\color{blue}{//设置端口速率为50MHz}}
+
+\verb| GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;|
+
+ \textit{\color{blue}{//设置端口工作模式为推挽输出}}
+
+\verb|GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;|
+
+ \textit{\color{blue}{//初始化该结构体到端口A}}
+
+\verb|  GPIO_Init(GPIOA, &GPIO_InitStructure);|
+
+\subsection{中断机制}
+	中断机制不管是在硬件上还是软件实现上都在STM32上得到了优化。硬件上，STM32的中断向量控制器(NVIC)与微处理器核采用了紧耦合的方式，减少了中断处理延迟和对于晚到中断的处理。所有中断，包括ARM Cortex内核的中断都由中断向量控制器来管理。软件方面，固件库对于中断也有很好的支持，基本属于傻瓜式开发。本系统的实现中也使用到了一些中断，主要是DMA中断，最初的源代码包括了引脚事件中断，后来由于同步精度的需要没有使能该中断而是使用了轮询的方式完成。
+
+	中断的初始化的步骤：
+\begin{enumerate}
+\item	设置中断向量控制器的优先级组；
+\item	设置需要使能的中断的优先级；
+\item	初始化中断相关的外设；
+\item	使能中断；
+\item	在中断函数中编写中断处理代码；
+\item	离开中断时清零中断标记位；
+\end{enumerate}
+
+STM32的中断向量控制器提供了5组优先级等级，主要是用于当多于一个中断事件发生时决定NVIC以何种顺序和优先级响应各中断。可设置的中断优先级分组如图~\ref{NVICPriGroup}。以NVIC\_{}PriorityGroup\_{}1为例，C代码:
+
+\verb|NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);|
+
+使能该组。在接下来的具体外设中断设置中阐明各个组的含义。
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/NVIC_PriorityGroup.PNG}
+\caption{STM32中断矢量控制器中断优先级分组 \label{NVICPriGroup}}
+\end{center}
+\end{figure}
+
+以使能DMA在USART1端口的中断为例，STM32的固件库中的每个中断都对应有两个层次的中断优先级，一个是抢占式优先级，即对应图~\ref{NVICPriGroup}中的pre-emption priority，另一个是次优先级即subpriority。抢占式优先级主要是决定中断嵌套，比如系统当前正在处理中断1，此时中断事件2在中断1还没有被处理完的情况下发生了。如果中断事件2的抢占式优先级高于中断事件1，那么微控制器就会保存中断事件1的现场，先让中断事件2执行，等中断事件2结束了再恢复中断事件1的现场让其继续执行，即所谓中断嵌套。那么此优先级如何工作？继续刚才的例子，如果中断事件2的抢占式优先级比中断事件1低，他就会等待，如果是中断事件2和事件3在系统处理中断事件1时同时挂起了，并且这两者的抢占式中断优先级都没有中断1高，此时次优先级高的就会在中断事件1结束后被优先响应。在STM32中，编号小表示优先级越高。
+
+回过头来看一下中断优先级分组，所谓的中断优先级分组1(NVIC\_{}PriorityGroup\_{}1),参看图~\ref{NVICPriGroup}实际含义就是在系统中分配的抢占式优先级可以是等级0或者等级1，这个只需要1bit表示就可以了。而次优先级可以有8个等级，从0到7，用3bit表示。其他的中断优先级分组概念类似。
+
+如下代码配置了DMA1通道6的中断优先级(接收脑电EEG数据的DMA通道)：
+
+\begin{verbatim}
+	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel6_IRQChannel;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;	
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+\end{verbatim}
+
+可以看到，该中断事件具有等级1的抢占式优先级和等级0的次优先级，即当该中断执行时，抢占式优先级为0的中断可以嵌套该中断。
+
+\subsection{串口USART初始化}
+在中断使能之前还需要一些操作来初始化外设，接收EEG脑电数据就需要初始化串口USART。
+
+初始化串口之前简单介绍一下串口的工作原理，不同于USB协议复杂的实现，串口协议采用串行通信模式，完成通信最少需要三个引脚，分别为地(GND)，信号输入(RXD)和信号输出(TXD)，如果需要传输上的控制，还可以有CTS和RTS引脚，这种方式称为硬件流控的串口，本质上即当一方要发送数据给另一方时，先通过引脚告知对方将有数据。如图~\ref{USARTHardFlow}所示为硬件流控的原理连接，去掉两边的CTS和RTS即为无硬件流控的基本设置(图中没有画地线GND)。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/USART_hardwareControl.PNG}
+\caption{两个USART(串口)之间硬件流控连接图 \label{USARTHardFlow}}
+\end{center}
+\end{figure}
+
+以上是完成USART串口通信所需要完成的硬件连接，软件编程上需要知道的串口通信的参数：
+\begin{itemize}
+\item	串口号，如”COM1”；
+\item	通信双方约定的波特率，即每秒传送多少个bit(典型的有9600bps,115200bps)；
+\item	停止位 (有1bit,1.5bit和2bit)；
+\item	数据位(8bit,9bit为主)；
+\item	校验位(奇校验和偶校验);
+\item	是否采用硬件流控的方式通信;
+\end{itemize}
+
+	任何想进行串口通信的双方必须具有相同的上面六项的设置。串口通信的其他方面由系统底层实现，在此不多赘述。
+
+
+在STM32中，初始化串口的步骤描述如下:(以使能USART2设置为硬件流控为例)
+
+1.使能STM32对应USART2的端口的四个管脚，其中RXD和CTS设置为输入，TX和RTS设置为输出。代码如下：
+
+\textit{\color{blue}{//使能端口时钟}}
+
+\verb|RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);|
+
+\noindent\textit{\color{blue}{//设置USART2的TXD和RTS端口为端口第二功能的推挽输出(默认管脚作为普通IO口使用)}}
+
+\begin{verbatim}
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP; 
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_1;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+\end{verbatim}
+
+\textit{\color{blue}{//设置USART2的RXD和CTS为输入引脚}}
+
+\begin{verbatim}
+GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_3;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+\end{verbatim}
+
+2.设置USART2端口的相关参数
+
+\textit{\color{blue}{//使能USART2时钟}}
+
+\verb|RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);|
+
+\textit{\color{blue}{//设置波特率为115200,8bit每次传输8bit数据长度，1停止位，无奇偶校验，采用硬件//流控，只使能输入(接收蓝牙数据)}}
+
+\begin{verbatim}
+  USART_InitStructure.USART_BaudRate = 115200;
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;
+  USART_InitStructure.USART_Parity = USART_Parity_No ;
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_RTS_CTS;
+  USART_InitStructure.USART_Mode = USART_Mode_Rx; 
+  USART_Init(USART2, &USART_InitStructure);
+  USART_Cmd(USART2, ENABLE);
+\end{verbatim}
+
+到此，串口USART2设置完毕，可以通过STM32固件库提供的相关USART发送和接收函数通过USART2传输数据。
+
+\subsection{DMA}
+
+DMA方式用于传输大量数据，该方式通过硬件实现数据传输。由于独立于微控制器核心处理单元，可以独立进行，因此编程配置以后不需要微控制器程序干预就可以自动运行，数据传输完成后再通过中断或标记位通知微控制器，以节省系统处理资源，DMA操作占用系统总线。无线同步触发器有大量数据需要传输，因此DMA方式是很好的选择。
+
+无线同步触发器中DMA操作主要有两个：
+\begin{itemize}
+\item	从蓝牙USART接收的数据到片上存储器的存储；
+\item	从添加Trigger以后的存储器上数据到发往计算机的USART端口的数据；
+\end{itemize}
+
+这里主要以1过程作为介绍的重点，以使前面的整个过程完整。
+
+	DMA的配置和前面的类似，也需要使能时钟，然后通过设置结构体的各个值来完成初始化操作。首先开始介绍DMA传输软件设置上需要知道的一些信息，由于硬件实现都已经在STM32的片内完成，DMA的所有的配置工作都通过编程实现。
+
+	DMA传输需要一个数据源地址和一个数据目的地地址，还需要知道每次DMA操作需要从源地址向目的地址传输的数据量。首先，源地址和目的地地址跟STM32的存储器结构有关，一般的存储器结构都是线性的，也就是地址都是递增的，STM32在设计时会分配某一段地址范围，比如0x4000 4400到0x4000 4800给USART2，跟USART2相关的各种配置寄存器和数据寄存器的值都可以通过读取这些地址得到到(可以是把这些寄存器跟这些地址做了映射，也可以是该地址直接就代表存储器里面的一个区域，具体定义与底层实现有关)，这里地址0x40004404是USART2的数据缓冲区地址，每次读取这个地址的值或者往这个地址写数据会启动USART2的数据接收和数据发送。此外，每次在C语言里定义一个变量时，该变量也会具有一个类似的存储器地址，这个工作由C编译器或者系统完成了。
+
+	在设置DMA的源地址和目的地地址时，就需要知道这两个绝对地址，由于想进行的操作是从USART2读取数据到存储器的某一区域做存储，因此源地址就是0x40004404,而目的地址可以是C语言中定义的一个数据的起始地址(可经过取地址(\verb|&|)操作获得)。
+
+	此外，如果DMA数据操作是从一个USART到另外一个USART，那么源地址和目的地址可以不变，但是如果数据进入存储器，不同的数据在同一个地址上会覆盖。因此还需要在DMA每传输一个单位数据以后进行地址的递增，以便把从USART2收到的数据按顺序存放入存储器。这里还有一个问题是，需要设置每次传输的基本数据单位，可以是字节(1 bytes)，可以是半字(half word = 2 bytes)也可以是字(word = 4bytes)。
+
+	另外还有一些设置决定是否在本次DMA的操作完成以后立即进行下一次DMA操作，DMA操作是不是从存储器的一个局域移动数据到存储器的另一个区域等。
+
+配置代码描述如下：
+
+\textit{\color{blue}{//使能DMA1的时钟}}
+
+\verb|   	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);|
+
+\textit{\color{blue}{//恢复DMA设置到默认值}}
+
+\verb|	DMA_DeInit(DMA1_Channel6);|
+
+\textit{\color{blue}{//配置DMA操作的外设地址，定义\# define USART2\_{}DR\_{}Base  $0x40004404$}}
+
+\verb|	DMA_RX_InitStructure.DMA_PeripheralBaseAddr = USART2_DR_Base;|
+
+\textit{\color{blue}{//配置DMA操作的存储器地址，知道这是一个地址就可以,u32表示该地址为32bit无符号数}}
+
+\verb|	DMA_RX_InitStructure.DMA_MemoryBaseAddr = (u32)(&(pDataFrame->StationNum));|
+
+\textit{\color{blue}{//每次DMA使能后传输的数据量,RecBUFFERSIZE是一个变量}}
+
+\verb|	DMA_RX_InitStructure.DMA_BufferSize = RecBUFFERSIZE-1;	|
+
+\textit{\color{blue}{//配置DMA的数据传输方向是从外设到存储器(外设为源头)}}
+
+\verb|	DMA_RX_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;|
+
+\textit{\color{blue}{//外设地址在每个DMA原操作后不增加}}
+
+	\verb|DMA_RX_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;|
+
+\textit{\color{blue}{//外设地址在每个DMA原操作后增加}}
+
+	\verb|DMA_RX_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;|
+
+\textit{\color{blue}{//定义每次DMA原操作传输的数据为1字节,那么BufferSize * 1字节就是一次DMA操作传输的数据量}}
+
+\verb|	DMA_RX_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;|
+
+\textit{\color{blue}{//存储器地址递增的单位，也是一次DMA源操作接收的数据量大小}}
+
+\verb|	DMA_RX_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;|
+
+\textit{\color{blue}{//普通DMA模式，在本次DMA传输完成以后不再进入下一次DMA循环，BufferSize清零}}
+
+\verb|	DMA_RX_InitStructure.DMA_Mode = DMA_Mode_Normal;|
+
+\textit{\color{blue}{//当几个DMA请求同时被挂起时，当前DMA请求的优先级}}
+
+\verb|	DMA_RX_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;|
+
+\textit{\color{blue}{//本DMA操作不是存储器到存储器的数据移动}}
+
+\verb|	DMA_RX_InitStructure.DMA_M2M = DMA_M2M_Disable;|
+
+\textit{\color{blue}{//把刚才上面结构体定义的参数初始化到DMA1的通道6}}
+
+\verb|	DMA_Init(DMA1_Channel6, &DMA_RX_InitStructure);|
+
+以上为DMA的配置过程，接下来阐明DMA1的通道6的含义图~\ref{DMACorresponding}表示了每个DMA通道对应的能响应的外设。在DMA1的通道6可以看到USART2\_{}Rx的字样，表示的就是该通道能响应USART2的接收请求，其他的外设请求响应的由其他DMA通道响应。由于DMA的优先级只有四级VeryHigh,High,Medium,Low。所以当两个具有相同优先级的DMA请求被挂起时，系统会优先响应通道号小的DMA请求，如图~\ref{DMACorresponding}右侧所示。
+
+	因此在上面的DMA初始化以后还需要如下代码完成这个对应关系:
+
+	\verb|USART_DMACmd(USART2, USART_DMAReq_Rx, ENABLE);|
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{graphic/DMARequestMapping.PNG}
+\caption{DMA请求映射图 \label{DMACorresponding}}
+\end{center}
+\end{figure}
+
+\subsection{中断入口}
+
+	至此，DMA的配置已经完成，但是还没有使能该DMA，因为DMA使能只能完成数据的接收，而如何知道DMA传输已经完成，还需要中断或者标记位的协助。单片机或者嵌入式系统都会在某种操作完成以后的把相应的标记位置位，如果想知道某个操作，比如DMA传输是否已经完成就可以通过程序轮询该标志位来完成，但这样的代价就是系统资源完全被使用在轮询上而同时不能做其他的操作，中断则可以让微控制器在某个中断事件没有完成之前做一些其他的事情，等中断触发了再去处理该中断事件。
+
+	中断发生以后，系统会跳到某一个地址处执行该中断的代码，STM32的固件库在中断处理上另外创建了一个.c文件，名为stm32f10x\_{}it.c。在该文件中定义了处理所有中断事件的函数，也即所有中断事件的入口地址，底层的对应关系全部由固件库实现，编程者只需要知道当某个事件的中断发生时，程序会跳转到这个文件的对应中断函数中就可以。以DMA1的通道6为例，该中断的入口函数地址为：
+\begin{center}
+\verb|void DMA1_Channel6_IRQHandler(void)|
+\end{center}
+
+为了让DMA1的通道6是在接收完规定字节数的从USART2端口来的数据以后再进入中断，需要在上面的DMA初始化以后添加如下代码：
+
+\textit{\color{blue}{//使能DMA1的通道6}}
+
+	\verb|DMA_Cmd(DMA1_Channel6, ENABLE);|
+
+\textit{\color{blue}{//使能DMA1通道6的传输完成中断，也即一次完整DMA数据传输完成以后该中断标志位置位}}
+
+\verb|	DMA_ITConfig(DMA1_Channel6, DMA_IT_TC, ENABLE);|
+
+到此，系统初始化的各项配置完成，不要其他操作可以让main函数进入\verb|while(1)；|空循环，当有DMA传输完成时就会自动跳转到stm32f10x\_{}it.c的
+
+\verb|void DMA1_Channel6_IRQHandler(void)|
+
+函数执行代码。
+
+\subsection{系统固件实现综述}
+
+	上面的几个部分比较完整的介绍了STM32使用固件库函数完整配置USART2端口通过DMA接收数据保存到存储器并在每次传输完成后进入中断的过程。但并没有介绍具体的程序实现，而只是配置，另外也缺少对于程序整体宏观的一个印象，这一部分主要通过流程图的方式介绍整个系统。
+
+	\ref{EEGSynTrigger} 节 简单介绍了刺激事件信号与脑电EEG信号同步的思想。这一部分介绍其具体实现，并将编写的STM32固件程序全貌展示出来。程序整体流程(图~\ref{DMAIntWhole} )如下所述：
+\begin{enumerate}
+\item 系统上电；
+\item 初始化系统时钟72MHz/36MHz；
+\item 初始化外设，包括IO口，USART端口，DMA，同步计数器以及各种中断优先级设置和中断使能；
+\item 握手同步两边的时钟，成功则继续，否则LED输出红色并停止
+\item 使能DMA1通道6的中断接收
+\item 程序进入循环；
+\end{enumerate}
+
+在图~\ref{DMAIntWhole}的流程图最左侧的是主循环，完成了系统的初始化配置和中断设置等。中间的流程是每0.1ms一次的同步计数器中断，右边的流程是DMA数据接收完成后进入的中断程序。为了理解的方便，我将大量的代码放在中断中进行的，使中断的执行时间增加，由于同步计数器的中断优先级最高，抢占式优先级为0，次优先级为0，因此很有可能DMA的中断会被同步计数器的中断嵌套，而中断嵌套非常耗费系统资源，一般也不建议将大量代码放在中断中执行，为此将DMA中代码放入主程序main的while(1)循环中执行，每当有DMA完成的标记位被标记时就执行该段代码，而不再使能DMA1通道6的中断事件。最终版代码的流程图如图~\ref{DMAaskWhole} 所示，实际上还有一种思路是让程序在mian 循环中递增同步计数器，而在中断中完成DMA数据接收，考虑到同步计数器是无线同步触发的基础，如果某次计数值增加被DMA中断，那么就会造成系统同步误差，因此将同步计数器程序放入中断以最高优先级执行。该思路的还一个好处在于将原先放在中断中执行的代码放入主循环执行，就可以使用JTAG的在线调试功能查看该段代码的实时运行情况。而中断代码无法通过JTAG在线调式功能看到运行情况。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/wholeProces.png}
+\caption{带DMA中断的整体软件流程图 \label{DMAIntWhole}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/wholeProces2_final.png}
+\caption{带DMA轮询的整体软件流程图 \label{DMAaskWhole}}
+\end{center}
+\end{figure}
+
+
+

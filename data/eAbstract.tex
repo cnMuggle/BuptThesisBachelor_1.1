@@ -1,0 +1,20 @@
+\begin{center}  
+\zihao{3}\textbf{Wireless Trigger for Event Related Potentials}
+\end{center}
+%\vspace{0.5mm}
+\begin{center}  
+\zihao{-3}\textbf{ABSTRACT}
+\end{center}
+\vspace{2mm}
+\zihao{-4}
+
+Event Related Potentials (ERPs) are related to‘a variety of processes of brain that are invoked by the psychological demands of the situation.’ The ERPs techniques average the EEG signals after the presentation of the stimulus through many trials to get the various ERPs components. 
+
+As the stimulus synchronized ERPs was utilized in Brain Computer Interface which designs toward~\cite{Allison2007} people who suffer from severe neuromuscular disorders, a wireless connection would be efficient and flexible for daily applications.
+
+This thesis discusses the design of a wireless protocol to communicate ERPs and its implementation on Advanced RISC Machine (ARM). A 3-times Hand Shake process was proposed in the protocol to verify the connections between EEG Amplifier and Wireless Trigger. A synchronization of sub-clocks was completed after that. The protocol is also compatible with the Frame Structure of the EEG Amplifier which was implemented for SSVEP purpose.
+
+	This implementation for wireless communication of ERPs would results in a difference of the two sub-clock in 177us per minute. When the data size of every channel was fixed, the wireless Trigger could be adaptable for other parameters, for example, Sampling Frequency, Channels in every Sampling Time, of the wireless EEG Amplifiers. As many as 32 Marker Codes (Triggers) could be tagged in every Frame Package while currently the package size that the Wireless Trigger sends to Computer was at most 1024 bytes. The accuracy that Wireless Trigger could provide is up to 10 KHz which means the sampling rate of EEG Amplifier could be as high as that as well. 
+
+\vspace{3mm}
+\zihao{-4}{\bfseries KEY WORDS}\quad Event Related Potentials \quad Wireless Synchronization \quad Brain Computer Interface

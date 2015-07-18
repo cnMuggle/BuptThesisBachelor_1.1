@@ -1,0 +1,144 @@
+\chapter{结\quad 果}
+
+	前面几章介绍了事件相关电位(ERPs)无线同步协议在无线同步触发器上实现的理论基础和技术手段。本章将给出一些测试结果证明该协议及实现的系统能完成事件相关电位无线同步的要求以及目前实际系统所能达到的精度。
+
+\section{蓝牙模块无线传输延迟\label{sec:bluetooResult}}
+
+	目前所看到的子钟对准硬实现方案是第二套实现方案，最初的方案由于蓝牙模块无线传输延迟的标准差过大而放弃，但得出的相关结论对于以后改进系统性能会有帮助，这一部分也为后面第五章 讨论中对于第一套方案的论述提供数据支持(注，任何本毕设探索性的内容都放在第五章中论述)。
+
+\textbf{测试平台：}
+\begin{itemize}
+\item \textsl{无线蓝牙数据发送方：} STM3210E开发板COM1接蓝牙模块BTM704(图~\ref{TestPlatForm})
+\item \textsl{无线蓝牙数据接收方：} 无线同步触发器(Wireless Trigger, 图~\ref{hardwarePCB})
+\end{itemize}
+
+\textbf{数据测试方式:}数据发送方STM32通过Systick精确控制每隔N ms给蓝牙模块提供M 字节(bytes)的数据，接收方接收数据，如图~\ref{WirelessTest}所示。
+
+\textbf{测试手段:} 双通道示波器读取发送端蓝牙接收到的数据和接收端蓝牙给出的数据,比较数据波形，得出定性的蓝牙延迟。
+
+\textbf{延迟定性结论:} 如图~\ref{BlueToothSpy50ms}所示为发送间隔50ms，收发数据方检测到的USART端口数据情况，其中示波器屏幕下面一行的数据来自发送端，可以看见每次给数据的间隔都是50ms，从图~\ref{BlueToothSpy50ms}看不出来接收端蓝牙给的数据波动很大，为此截取该发送接收情况下的三个时刻的数据，如图~\ref{BlueToothSpy50ms1},图~\ref{BlueToothSpy50ms2},图~\ref{BlueToothSpy50ms3}所示。从图中可以定性的得到蓝牙传输的无线传输延迟为$21ms\pm 10ms$。由于这个粗略的结论已经表明该蓝牙无线传输具有很大的延迟波动，无法满足系统应用需求，所以并没有对其精确的误差进行定量的计算。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[scale = 0.5]{graphic/BlueToothSendRec.PNG}
+\caption{蓝牙延迟测试收发示意图 \label{WirelessTest}}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/BlueToothDelayTestSender.jpg}
+\caption{测试平台设备 \label{TestPlatForm}}
+[左为CP2102开发板，右为STM3210E开发板接蓝牙开发板]
+\end{center}
+\end{figure}
+%50ms
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[scale=0.5]{graphic/expData/50msInterval.jpg}
+\caption{50ms等间隔蓝牙数据发送与接收监视 \label{BlueToothSpy50ms}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[scale=0.5]{graphic/expData/50msInterval1.jpg}
+\caption{50ms等间隔蓝牙数据发送与接收监视-近距离1 \label{BlueToothSpy50ms1}}
+[下波形为发送，上波形为接收]
+\end{center}
+\end{figure}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[scale=0.5]{graphic/expData/50msInterval2.jpg}
+\caption{50ms等间隔蓝牙数据发送与接收监视-近距离2 \label{BlueToothSpy50ms2}}
+[下波形为发送，上波形为接收]
+\end{center}
+\end{figure}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[scale = 0.5]{graphic/expData/50msInterval3.jpg}
+\caption{50ms等间隔蓝牙数据发送与接收监视-近距离3 \label{BlueToothSpy50ms3}}
+[下波形为发送，上波形为接收]
+\end{center}
+\end{figure}
+
+\section{晶振偏差\label{sec:SourceOscillator}}
+	子钟对准协议的基础是脑电放大器和无线同步触发器在同步以后能在独立的情况下同步递增其内部的同步计数器，从而达到脑电EEG数据与刺激事件信号同步的目的。然而，世界上没有两块晶振是完全一样的，这也就决定了他们不可能以完全一样的速率递增同步计数值，多少时间会有多少个计数值的偏差？这是本节所关心的问题。
+
+\textbf{测试平台：}
+
+\begin{itemize}
+\item 无线同步触发器(精度为50ppm的有源晶振)
+\item		  STM3210E开发板(无源晶振,精度比有源晶振低)
+\item		  一导脑电放大器(精度为50ppm有源晶振, 图~\ref{EEGAmpWirelessTrigger})
+\end{itemize}
+
+\textbf{测试方法:} 设置两系统在同步以后对同步计数器Counter的计数值对10000求余数为1时翻转某一个管脚的电平，由于同步后计数值复位为0会马上有一个电平翻转出现，对10000求余数相等意味着系统在以$0.1ms$计数值增加一次的情况下对该输出端口每1s翻转一次。
+
+如图~\ref{EEGAmpWirelessTrigger}所示将两系统连接同步以后(同步后就可以断开连接)，通过示波器两通道监视各自电平的翻转，通过示波器波形可以清楚的看到某一次电平翻转时两系统的偏差，如图~\ref{Difference1sExam1}所示。为什么使用10000的计数值翻转是考虑到，如果某一个系统的计数器相对另一个系统偏差较大，比如每秒偏差500ms，那么经过3s以后就会偏差1.5s对于1s的电平翻转将还是会认为是500ms，为了防止这样的情况出现，此处设置的1s的翻转相对于两个系统的计数器值的偏差是很大的。
+
+\textbf{测试结果:}实际测试中还设置过每100us，也即0.1ms翻转一次电平，由于结果不直观，不予展示。
+
+使用测试中的几个系统后得出如下定性结论：
+
+\begin{enumerate}
+\item 当两系统分别使用有源晶振和无源晶振时，每分钟偏差最大；
+\item 当两系统都是用有源晶振，但使用不同的主频时(一方72MHz一方36MHz)，每分钟偏差小于第一种情况；
+\item 当两系统都是用有源晶振且主频一致时，每分钟偏差最小。
+\end{enumerate}
+
+第三种情况的定量结论如图~\ref{DifferenceCal}所示：
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/PiezoOscillatorDifference.PNG}
+\caption{有源晶振且同主频系统每分钟同步偏差 \label{DifferenceCal}}
+\end{center}
+\end{figure}
+
+图中展示了三次实验的数据，时间长度从30分钟到100分钟，对于一个固定时间间隔之后的电平翻转偏差进行了测量，可以从图中看到该偏差具有非常好的线性特性。
+
+\textbf{数据处理：}对于图中同一组实验的数据进行前后相邻两点计算斜率再求平均的方式得到了每一组数据的平均斜率，即每分钟偏差。
+
+\begin{equation}
+SlopeRate1 = 174.7 \mu s \\ min
+\end{equation}
+\begin{equation}
+SlopeRate2 = 177.7 \mu s \\ min
+\end{equation}
+\begin{equation}
+SlopeRate3 = 161.0 \mu s \\ min
+\end{equation}
+
+这三条曲线的平均斜率为$171.1 \mu s/min$, 曲线拟合度(R2)都大于0.99。
+
+	但是如果要对该系统进行误差纠正的话，还需要知道某次具体的同步之后是哪一方的晶振频率快，从实际情况来看，都是发动同步的无线同步触发器的晶振速率快率先完成翻转；其次，纠正值必须是上图中斜率最小的那条曲线对应的数值，否则系统误差会随着时间增加反向增长。
+
+随后我尝试了对该误差进行两种不同程度的纠正，如图~\ref{DifferenceCal}中SlopeRate~4和SlopeRate~5所示曲线分别为纠正$100 \mu s / min$和 $150 \mu s / min$后的曲线，可以看到，$100 \mu s / min$的纠正使偏差得到了改善，并且误差的线性依然很理想,曲线拟合度大于0.99。使用$150 \mu s / min$的纠正之后，在记录一小时以后的系统计时偏差也只有不到$ 1000 \mu s$,但此时该偏差的变化线性度就不太好，并且在初始一段时间内海出现了无线脑电放大器超前的情况。图~\ref{Diff150usMin}单独展示了$150 \mu s / min$时的偏差变化情况。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/150usMinRevDiff.png}
+\caption{$150\mu s \backslash min $每分钟纠正后两系统子钟对准偏差 \label{Diff150usMin}}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/EEGAmpAndWT.jpg}
+\caption{无线同步触发器(左)和一导脑电放大器(右) \label{EEGAmpWirelessTrigger}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/DifferenceExample.jpg}
+\caption{ 两系统同步之后某一时刻电平翻转差值 \label{Difference1sExam1}}
+[左下角显示如图所示两系统的当前计数偏差为$95 \mu s$]
+\end{center}
+\end{figure}
+

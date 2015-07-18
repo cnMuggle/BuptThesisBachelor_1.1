@@ -1,0 +1,275 @@
+\documentclass[a4paper,cs4size]{ctexrep}
+%\usepackage[xetex,colorlinks, bookmarks]{hyperref}
+\usepackage[xetex, bookmarks]{hyperref}
+\usepackage{float}
+\usepackage[top=1in,bottom=1in,left=1in,right=1in]{geometry}
+\usepackage{multirow}
+\usepackage[xetex]{graphicx}
+\usepackage{tabularx}
+%from Internet http://hi.baidu.com/lyunsun/blog/textbf/ad50e354db8537163b293530.html
+%实现居中且列宽固定
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcolumntype{C}[1]{>{\PreserveBackslash\centering}p{#1}}
+\newcolumntype{R}[1]{>{\PreserveBackslash\raggedleft}p{#1}}
+\newcolumntype{L}[1]{>{\PreserveBackslash\raggedright}p{#1}}
+%网上说的将文献以上标形式出现,成功,可选参数有好几个，没记住...
+\makeatletter
+\def\@cite#1#2{\textsuperscript{[{#1\if@tempswa , #2\fi}]}}
+\makeatother
+
+\usepackage{eso-pic,calc}
+
+%\setlength{\voffset}{-3cm}
+
+\begin{document}
+\pagestyle{empty}
+
+
+\begin{center}
+\zihao{-3}\songti{\ziju{1} 北京邮电大学}
+
+{\heiti 本科毕业设计(论文)开题报告}
+\end{center}
+\noindent
+\begin{tabular}{|C{0.2\textwidth}|C{0.25\textwidth}|C{0.06\textwidth}|C{0.12\textwidth}|C{0.11\textwidth}|C{0.1\textwidth}|}
+\hline
+学院 &	信息与通信工程学院 & 专业 & 通信工程 & 班级 & 06123 \\
+\hline
+姓名 &	樊高峰	& 学号 & 062367 & 班内序号 & 26 \\ \hline
+指导教师 & 洪波  & 职称 & \multicolumn{3}{c|}{副教授} \\ \hline
+设计(论文)题目 & \multicolumn{5}{c|}{事件相关电位(ERPs)无线同步协议设计与系统实现}  \\ \hline
+\end{tabular}
+\begin{center}
+\heiti\zihao{-3}课题背景和意义
+\end{center}
+%%%%%%%%%%%%%%%%%画图区%%%%%%%%%%%%%%%%%
+\setlength{\unitlength}{1mm}
+\noindent\begin{picture}(0,0)
+\multiput(0,0)(160,0){2}{\line(0,-1){188}}
+\multiput(0,0)(160,0){2}{\line(0,1){17}}
+\put(0,-188){\line(1,0){160}}
+\end{picture}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\bfseries 脑电放大器无线同步触发器是脑电放大器的一个辅助设备。}
+他完成脑电EEG无线信号和刺激事件码信号的接收以及两者的同步，并将同步后数据送回数据处理系统。脑电EEG信号是电极采集自头皮的微弱电信号，大小以$\mu$V量级计,需要经过脑电放大器放大到AD的采样范围后再进行数字化处理。
+
+{\bfseries 以事件相关电位(ERPs-event related potentials)技术为代表的脑电测量和研究技术提出了对脑电放大器触发器的需求。}
+1929年,Hans Berger~\cite{ERPtechniques}借助置于头皮的电极，成功测量到脑部的电活动,从此就有了被称作脑电图(EEG-electroencephalogram)的技术。20世纪60年代以后，科学家们开始记录同执行任务相关的EEG信号，他们将同刺激事件相关的、并在时间上同刺激锁定的EEG信号平均起来，观察到一系列的所谓事件相关电位(ERPs, event related potentials)。
+
+\textbf{1964年,Grey Walter~\cite{ERPtechniques}及其同事报告了第一个认知ERP成分—关联性负变化(contingent negative variation-CNV)。}这项研究的每一个试次(each trial)都先给被试一个警告信号(如一个咔哒\verb|[click]|声)，随机的500$\sim$1000ms之后再给一个靶刺激(如一串闪光)。在没有任务要求的情况下，这两个刺激中的每一个都会诱发出所预期的感觉ERP反应。但如果要求被试对检测到的靶刺激做按键反应，那么，研究者于警告信号与靶刺激之间，在额部电极就会观察到一个大的负电压。这个负电压-CNV显然不是一个感觉反应，而似乎是反映了被试对即将到来的靶刺激的准备。ERP成分的分析从此成为研究者关注的对象。其后的研究进一步表明，这些电位提供了关于认知过程的脑内信息，而且具有毫秒级的分辨率。这种方法，又称事件相关电位技术。脑电放大器也开始有触发器接口(通常是DB25的并口)用于接收刺激事件码(event codes)。
+
+\textbf{但是，在实验室条件下完成的ERP实验或者其他涉及脑电信号同步的实验没有对于无线同步触发器的需求。}
+例如在使用视觉刺激的实验中，实验被试坐在电屏蔽室内，距离显示器有一定的距离，整个实验过程中要求被试尽量保持不动，以减少如肌肉收缩，眨眼等造成的脑电噪声(伪迹artifacts)，所有进出屏蔽室的信号线都要加屏蔽层以减少噪声，由于被试不能动也就无需无线通信，另外为了保证数据采集的信号质量，所有的设备(包括脑电放大器及其触发器)都是有线连接。
+
+\textbf{脑机接口技术的发展需要脑电信号的记录脱离实验室环境，这也间接推动了对于无线同步触发器的需求。}脑-机接口(Brain-computer interface, BCI )是指在大脑和计算机等外部设备之间建立通信的连接，它不依赖于脊髓/外周神经肌肉系统，是一种全新的信息传导通路。肌萎缩侧索硬化(amyotrophic lateral sclerosis ,ALS)、脊髓损伤(spinal cord injury)、中风(stroke)和脑瘫(cerebral palsy)等疾病破坏患者的自主神经肌肉控制能力~\cite{Lebedev2006}，会导致患者不能进行运动和交流。脑-机接口就是一种帮助严重残疾人士重建运动控制的潜在的全新方法~\cite{Wolpaw2000}。其应用就不能局限于实验室。
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+\AddToShipoutPicture{%
+  \begingroup
+    \setlength{\@tempdima}{2.48cm}%
+    \setlength{\@tempdimb}{\paperwidth-2\@tempdima}%
+    \setlength{\@tempdimc}{\paperheight-2\@tempdima}%
+    %\thicklines%
+    \put(\LenToUnit{\@tempdima},\LenToUnit{\@tempdima}){%
+      \framebox(\LenToUnit{\@tempdimb},\LenToUnit{\@tempdimc}){}}%
+  \endgroup  
+}
+\makeatother
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+1970年美国国防部资助成立了最早的BCI研究组，Jacques Vidal等人开发了一个由头部记录到的电活动驱动的简单通信系统，利用生物反馈方法研究人与计算机之间进行的通讯，研究结果表明使用者可以通过训练产生视觉诱发电位，并利用它来控制屏幕上的指针作二维运动，这项研究成为现代脑-机接口的雏形~\cite{Wolpaw2000}。
+
+1988，Farwell和Donchin~\cite{FARWELL1988}提出oddball 范式(paradigm)并设计了第一个基于视觉诱发电位P300的脑机接口系统(P300-based BCI)。该范式利用了小概率事件(rare event)会诱发脑电反应，产生P300信号(ERP时间相关电位的一种，是在刺激出现后大约300ms处的一个正峰值信号；CNV也是)。在实验设计中~\cite{Donchin2000}，一个6x6的闪烁矩阵会呈现在被试面前，包括26个字母和10个数字，6x6矩阵以横排竖列的方式随机闪烁，当被试想要表达的字母或数字所在的行或列闪烁时，小概率事件(rare even)发生,脑电放大器就能检测到大脑对于这个信号的反应。由于这一脑电成分在刺激后300ms左后表现为一正峰值，因此称为P300。计算机通过确定诱发P300信号的行号和列数就能确定到底被试选择的是哪一个符号，从而完成交流。
+
+除了研究的比较早的视觉范式外，也出现了基于听觉辨析的脑机接口系统~\cite{JingGuoApril29-May22009}。然而这些技术真正的价值在于能走出实验室，成为那些身残志不残的人日常交流工具，帮助他们克服肌肉神经失调的障碍。
+
+\textbf{但目前各种基于EEG的BCI系统研究还大都处于试验阶段，离实际应用有一定距离。}
+因为目前的BCI系统得信息传输速率较低，多在5-25bit/min，而且必须建立在一定程度的正确率的基础上，另外，使用生物反馈的BCI系统还需要一定时间的训练方可使用。一些人把目光投向别处，开始研究侵入式的脑机接口系统(invasive BCI)~\cite{Lebedev2006}，通过把电极安放在脑膜上(或下)或者直接打到大脑皮层上以获得更好的信号质量和信息传输速率。这一方面的试验目前还多在动物实验阶段\cite{Lebedev2006}，国外也有人自愿安装类似设备的先例。此外，科研级的脑电放大器产品价格昂贵也是阻碍其推广应用的一个因素。
+
+目前已有实验室研发的两通道无线脑电放大器~\cite{Xu2009}，其价格相比同类商用脑电放大器产品低，并且实现了基于(SSVEP)视觉诱发电位的脑机接口系统用于Googl Search~\cite{Xu2009}。由于SSVEP本身不需要同步触发，该放大器也没有实现无线触发的功能。
+
+\noindent\textbf{需求分析}
+
+目前市场上也有一些无线脑电放大器的产品，如Neuroscan的SynAmps Wireless 32 Channel AC Amplifier\footnote{coming soon,http://www.neuroscan.com/landing.cfm}，IMEC Wireless EEG system。这些无线脑电放大器还只能实现脑电数据的记录，并没有提供无线的同步解决方案。有人设计了基于IMEC无线脑电放大器的软件同步方案，但基于硬件的无线同步解决方案仍是空白。
+
+\noindent\textbf{系统对比}
+
+\emph{有线脑机接口系统}的一般组成如图~\ref{wiredSys}~所示;
+刺激呈现系统给出刺激信号。脑电放大器通过电极帽(数据采集系统)采集被试的脑电信号(EEG)经放大滤波数字化同步后回传给数据处理系统(计算机)处理。由于目前通用的微机操作系统如Windows不是实时操作系统~\footnote{http://www.neuroscan.com/PsychophysiologyPlatforms.cfm}，其对突发事件(如事件码)的响应时间方差大，为了保证响应时间尽可能的稳定，通常会使用两台不同的主机担当刺激呈现系统和数据处理系统。
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.5]{../figures/wiredSys.eps}
+\caption{有线脑电放大器系统框图 \label{wiredSys}}
+\end{center}
+\end{figure}
+
+\noindent\textbf{同步分两种}
+\begin{description}
+\item[外源性同步] 刺激源上接一个传感器到EEG信号放大器,刺激发生时传感器产生脉冲发送到脑电放大器与之同步。其缺点是外源性记录对刺激发生的判断不准确，有可能误判或漏判。而且长时间记录也不稳定。一般不采用。
+\item[内源性同步]刺激呈现系统产生刺激同时发送同步事件码信号到数据采集系统与脑电EEG数据同步。通常有线连接的基于P300的BCI系统~\cite{Zhang2008}用计算机并行接口Parallel Port发送同步信号到EEG放大器与EEG信号同步，使用如NeuroScan SysAmps2的脑电放大器系统。
+\end{description}
+
+\emph{软件同步的无线脑电放大器}的处理步骤与有线系统相同。只是脑电EEG信号记录后通过无线发送到数据处理系统处理,系统框图如图~\ref{wirelessSysOld}~所示。
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.5]{../figures/wirelessSysOld.eps}
+\caption{无线脑电放大器系统框图(软件同步) \label{wirelessSysOld}}
+\end{center}
+\end{figure}
+
+为了实现软件同步，该系统需要用一个额外的进程独立记录刺激的起始时间，后期数据处理时再将脑电信号与时间标签的对上,确定对应关系。由于脑电信号的记录与刺激时刻的记录是分开进行的(独立的)，因此缺点就是起始时刻的不同步会导致后面都不同步。此外无线信号传输很难避免由于信噪比低或者信号不好而导致的数据包丢失,因此如果不能经常对刺激进行同步的话,独立记录的两组信号之间的对应就不正确。
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.5]{../figures/wirelessSysUS.eps}
+\caption{无线脑电放大器系统框图(同步) \label{wirelessSysUS}}
+\end{center}
+\end{figure}
+\pagebreak[3]
+\begin{center}
+{\heiti\zihao{-3}系统设计}
+\end{center}
+
+本毕设就是要设计和实现基于无线脑电放大器的无线同步触发器。
+
+脑电放大器无线同步触发器，以下简称Wireless Trigger。系统前端是蓝牙无线连接的(数据收集系统)，后端是通过DB25并口连接的刺激呈现系统和通过USB口连接的数据处理系统。系统框图~\ref{wirelessSysUS}
+\pagebreak[3]
+
+\begin{center}
+{\heiti\zihao{-3}硬件设计}
+\end{center}
+
+系统硬件框图如图~\ref{wirelessSche}
+
+\begin{figure}[!htd]
+\begin{center}
+\includegraphics[scale=0.7]{../figures/STM32_2.eps}
+\caption{Wireless Trigger系统硬件框图 \label{wirelessSche}}
+\end{center}
+\end{figure}
+
+\textbf{蓝牙芯片}的接口有串行，USB，数字I/O，模拟I/O和SPI编程等，市场上比较普遍的是USB接口的蓝牙模块，串行接口也比较常见。IO通信的蓝牙芯片由于需要额外的软件开发时间不予考虑。其次由于内置蓝牙模块，所以采用与其相同的串口蓝牙模块BTM0704C2P~\footnote{http://www.jinoux.com/product103.html}。该模块与MCU的USART端口通信，不需要ST3232等电平转换芯片。其电路连接如图~\ref{bluetoothHardware}
+
+\begin{figure}[!htd]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{../figures/RS232ToBTM0704C2P.JPG}
+\caption{蓝牙模块BTM0704C2P局部硬件连接图 \label{bluetoothHardware}}
+\end{center}
+\end{figure}
+
+\textbf{主控芯片}选用STM32F103RBT6，该芯片自带多个USART和一个USB2.0接口，属于ARM-Cortex M3内核。最高主频72MHz。脑电信号的频率很低，通常的脑电放大器AD分辨率为12bit，1000Hz采样，0.05~200Hz滤波(SynAmps2, Neuroscan, USA)~\cite{JingGuoApril29-May22009}。因此72MHz的主频对于实时处理脑电信号是足够的。
+
+\textbf{数据通信}采用USB接口。串口通信虽然编程简单，但有速率限制，目前大部分笔记本都没有串口，而USB口通信虽然增加了编程上的复杂度，但端口普遍而且2.0有12Mbps full speed速率保证。
+
+\noindent USB的通信也考虑了三套实现方案。
+\begin{enumerate}
+\item USB通讯模拟串口，使用virtualComPort虚拟串口实现，即通过编程模拟USB为标准串口设备。
+\item 使用USB转RS232芯片，如FTDI232芯片~\footnote{http://www.ftdichip.com/}，该方案的优点在于其能实现Windows,Linux和MAC的多平台兼容。缺点是这种方案其实就是第一种方案的硬件实现，本质上仍是USB口模拟成串口，所以最高速率只能达到1Mbps而无法达到USB的full speed。
+\item 使用USB的标准协议，编写上位机和下位机程序。缺点是编程复杂，优点是能达到USB的full speed。
+\end{enumerate}
+为了保险起见，由于硬件电路设计先做，因此在PCB版上预留了三套USB系统的接口。
+
+\textbf{事件码(也即刺激信号)通信}采用25针并口DB25。使用并口是考虑到并口相比于其他端口，比如USB或者串口的响应速度都要快。以普通PC为例，这些设备都接在PCI总线上，只有并口不需要像USB和串口那样的中间级的电平转换，所以响应速度最快。
+\pagebreak[2]
+\begin{center}{\heiti\zihao{-3}软件设计}\end{center}
+
+Wireless Trigger外围的数据流如图~\ref{outDataFlow}所示
+\begin{figure}[!htd]
+\begin{center}
+\includegraphics[scale=0.5]{../figures/dataFlowTop.JPG}
+\caption{顶层数据流 \label{outDataFlow}}
+\end{center}
+\end{figure}
+
+无线脑电放大器~\cite{Xu2009}(数据收集系统)通过电极记录脑电EEG信号并发送到Wireless Trigger；刺激源Stimulus(即刺激呈现系统)在通过视觉或听觉方式呈现刺激的同时，发送事件码(event codes)到Wireless Trigger。Wireless Trigger 把到达的事件码标记到经过的EEG脑电信号上。即只有当刺激发生时对应的脑电数据被标记, 其他时刻的脑电数据未被标记。此处每3Bytes的脑电数据与1Bytes的事件码合并，没有新事件码时，该Byte为0x00。此后数据通过USB端口返回数据处理系统。
+
+Wireless Trigger内部的数据流如图~\ref{inDataFlow}所示
+\begin{figure}[!htd]
+\begin{center}
+\includegraphics[scale=0.5]{../figures/DataFLow0.JPG}
+\caption{0层数据流 \label{inDataFlow}}
+\end{center}
+\end{figure}
+
+\textbf{软件流程设计}
+一般的MCU系统软件设计流程可以描述为图~\ref{generalSoftware}：都要经过初始化阶段然后才是循环读取的主程序。
+\begin{figure}[!htd]
+\begin{center}
+\includegraphics[scale=0.5]{../figures/generalSoftware1.JPG}
+\caption{一般MCU系统软件设计 \label{generalSoftware}}
+\end{center}
+\end{figure}
+
+由于脑电EEG数据和事件码两路信号都输入到Wireless Trigger，设置系统循环检测其中一路，对另一路信号采用中断输入的方式。由此产生两套解决方案。
+
+\begin{description}
+\item[方案一] USART路数据即蓝牙接收的脑电EEG信号主程序轮询检测，并口事件码刺激信号中断触发，如图~\ref{SoftwareDes1}
+\item[方案二] 并口事件码刺激信号主程序轮询检测，USART路无线脑电蓝牙信号中断触发，如图~\ref{SoftwareDes2}
+\end{description}
+
+编程采用STM32的firmware library。
+
+\begin{figure}[!htd]
+\begin{center}
+\includegraphics[scale=0.7]{../figures/SoftwareDes1_2.JPG}
+\caption{方案一 \label{SoftwareDes1}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htb]
+\begin{center}
+\includegraphics[scale=0.6]{../figures/SoftwareDes2_2.JPG}
+\caption{方案二 \label{SoftwareDes2}}
+\end{center}
+\end{figure}
+
+\pagebreak[2]
+\begin{center}{\heiti\zihao{-3}课题实验平台及基础}\end{center}
+
+Wireless Trigger要配合无线脑电放大器和实验设计才能工作。放大器使用\cite{Xu2009}中的两通道无线脑电放大器，其通信采用无线蓝牙方式本身不带Trigger，因此可以与Wireless Trigger配合工作。实验设计基于~\cite{JingGuo2009-Jul-11}(实验范式为图~\ref{AuditoryParadigmG})。
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.5]{../figures/AuditoryParadigmGuo.JPG}
+\caption{听觉范式实验设计 \label{AuditoryParadigmG}}
+\end{center}
+\end{figure}
+\pagebreak[3]
+\begin{center}{\heiti\zihao{-3}课题预期结果}\end{center}
+
+	本课题的预期结果是在\cite{JingGuo2009-Jul-11}\cite{Xu2009}的放大器和实验范式基础上，证明Wireless Trigger能完成无线脑电信号与刺激信号的同步，并能利用Wireless Trigger完成无线ERP实验数据的记录和存储，并且刺激信号与到达的wireless Trigger的事件码必须具有较小的延迟方差。
+\pagebreak[3]
+\begin{center}{\heiti\zihao{-3}进度安排}\end{center}
+
+\begin{description}
+\item[3.1-3.7\quad 第一周 ] 任务书，开题报告；
+\item[3.8-3.14 \quad   第二周 ] 硬件电路设计；STM32最小系统，蓝牙模块接口电路，并口电路，USB数据电路和USB电源供电；
+\item[3.15-3.21	 \quad  第三周 ] 硬件电路设计和PCB制版提交；
+\item[3.22-3.28 \quad  第四周 ] MCBSTM32开发板的STM32编程：蓝牙模块；PCB焊接和测试；
+\item[3.29-4.3	\quad  第五周 ] STM32编程：并口电路测试以及USB编程-上位机及下位机；
+\item[4.4-4.10\quad	   第六周 ]STM32编程：USB编程-上位机及下位机；
+\item[4.10-4.16\quad	   第七周 ] STM32编程；
+\item[4.17-4.23	\quad   第八周 ] 整体软硬件测试；
+\item[4.24-4.30	 \quad  第九周 ] 整体软硬件测试；
+\item[5.1-5.7\quad	   第十周 ] 中期检查；
+\item[5.8-5.14	\quad   第十一周 ]连接无线脑电放大器，测试无线数据流，实验前准备；
+\item[5.15-5.21	\quad   第十二周 ] 实验测试；
+\item[5.22-5.28	 \quad  第十三周 ]  后期调试；
+\item[5.29-6.4	 \quad  第十四周 ]准备毕设答辩；
+\item[6.10\quad	   第十五周 ] 答辩；
+\end{description}
+
+\noindent\begin{tabularx}{160mm}{|C{0.2\textwidth}|X|C{0.12\textwidth}|C{0.22\textwidth}|}
+\hline
+\multirow{2}{*}{指导教师签字} & \hspace*{0.3\textwidth} & \multirow{2}{*}{日期}	& \multirow{2}{*}{2010 年 3 月 7 日} \\ 
+ & \hspace*{0.3\textwidth} & \hspace*{0.1\textwidth} & \hspace*{0.1\textwidth} \\ \hline
+\end{tabularx}
+
+\vspace*{2ex}
+\noindent 注：可根据开题报告的长度加页；一式二份，学院、学生各一份。
+
+\bibliographystyle{unsrt}
+\bibliography{../ref/referenceThesis}
+
+\end{document}

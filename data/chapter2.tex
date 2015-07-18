@@ -1,0 +1,169 @@
+\chapter{方法-协议设计\label{chp:protocol}}
+本章主要介绍了事件相关电位无线同步的协议设计，主要思想是通过子钟硬同步对准避开无线传输延迟的影响，误差主要取决于系统提供时钟信号的晶振偏差；同时协议还兼容了无线脑电放大器~\cite{Xu2009}的数据格式，并新增加了一个数据包结构用于传输自适应参数。
+\section{基本思路-子钟对准硬同步}
+\subsection{子钟概念引出}
+在卫星发射等航天任务中也需要子钟，以地球同步轨道卫星发射为例，如图~\ref{GeostationarySate}，卫星在升空进入椭圆轨道后在距离地球36000千米处加速进入地球同步轨道，以光速计算这个传输的延迟是:
+\begin{equation}
+\frac{36000 \times 10^{3}}{3 \times 10^{8}} = 0.12 s  
+\end{equation}
+
+即地球站给卫星的信号需要经过至少0.12s的传输才能被卫星接收到。再考虑由于距离远，无线数据传输出错需要纠正重发，卫星收到数据后需要向地面确认收到信号等因素，实际完成通信时间会远远大于0.12s，如果地面对于卫星的控制采用卫星实时接收数据并执行的方式，那么可以想见，卫星就不可能准确的进入地球同步静止轨道。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/GeostaiontarySatellite.PNG}
+\caption{ 地球同步卫星发射轨道 \label{GeostationarySate}}
+[卫星从地球发射后会进入绕地椭圆轨道(如图中椭圆所示)，在达到距地最远点时点火加速脱离椭圆轨道进入地球同步轨道]
+\end{center}
+\end{figure}
+
+实际采取的措施是：卫星携带一个振荡偏差小于$10^{-14}$的原子钟，在升空之前先与地面原子钟完成对时，升空后地面对卫星的控制通过提前发送控制信号给卫星，指定以几点几时几分几秒时执行某种指定操作，从而大大提高了卫星执行操作的时间准确性。
+
+把这一概念运用到刺激事件与EEG脑电的同步中，设计了如图~\ref{WirelessTriggerSche}所示的系统，对比图~\ref{WiredBCI}可见，系统增加了一个无线同步触发器(Wireless Trigger)来接收EEG脑电数据和刺激事件信号(Marker Code)，数据在无线同步触发器上完成同步以后返回给计算机。由图~\ref{WirelessTriggerSche}可见被试只需要头戴电极帽并携带脑电放大器(EEG Amplifier)，数据通过无线发送给无线同步触发器，简化了用户端的连接。无线同步触发器的具体实现在\quad 第三章~系统实现\quad 中讨论。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/SubClockWirelessSch.PNG} 
+\caption{ 基于ERP无线同步协议的脑机接口系统原理图 \label{WirelessTriggerSche}}
+\end{center}
+\end{figure}
+
+\section{子钟同步过程}
+数据传输之前，无线同步触发器与脑电放大器先进行子钟对准，使其各自的内部计数器以相同的起始值和相同的时间间隔递增。同步之前先需要进行握手以确认连接。整个子钟同步的过程可以分为：握手，使能计数器，同步确定三个步骤。
+\subsection{三次握手}
+	握手过程采用了有线连接以减少传输延迟并提高对准的精度。同步双方(这里是脑电放大器和无线同步触发器)各设置两个IO口分别为同步输入和同步输出端。然后按图~\ref{handshankeHard}所示的方式连接，即脑电放大器同步输出接无线同步触发器同步输入，无线同步触发器同步输出接脑电放大器同步输入，另外还需要将两个设备共同接地以防止基准电平的不同。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/ConnectionSynchronization.PNG}
+\caption{ 同步握手连接图 \label{handshankeHard}}
+\end{center}
+\end{figure}
+
+握手过程时序如图~\ref{TFHardwareSyn}所示：图中用A和B代表同步双方，A\_{}O表示A的输出端口，A\_{}I表示输入端口，B类似。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/TimeFlowHardwareSynch.PNG}
+\caption{ 硬件握手时序 \label{TFHardwareSyn}}
+[横轴为时间轴]
+\end{center}
+\end{figure}
+
+握手过程描述如下：
+\begin{enumerate}
+\item 初始化端口状态,A的输出初始化设置为高电平，表示为A\_{}O = 1;相应的B\_{}O = 0;
+\item 延时一段时间；(实际测试中发现，如果初始化完成后立即开始检测输入电平，由于两边系统初始化时间不同，一边开始检测端口状态时，另一方可能尚未初始化端口电平，而端口输出状态不可控，导致握手失败。)
+\item	A,B输入端口开始检测输入电平;
+\item B输入首先检测到高电平，如图~\ref{TFHardwareSyn} 中B\_{}I行第一个 {\textcircled{\small{1}}} (B\_I = 1);随后B置高其输出端口(B\_O = 1);并重新开始检测其输入端电平(B\_I == 0?)。
+\item 输入在检测到端口电平抬高(A\_{}I = 1)，如图中第二个 {\textcircled{\small{1}}}; 置低其输出端(A\_{}O = 0)并重新检测输入(A\_{}I == 0?)；
+\item 上一步A的操作导致B的输入端置低 (B\_{}I = 0)，如图~\ref{TFHardwareSyn} B\_{}I 行的 {\textcircled{\small{2}}}，随后B也将输出置低 (B\_{}O = 0);
+\item A输入端检测到置低，然后A输出置高，第三次握手的过程类似上面的描述。
+\end{enumerate}
+
+	两边都完成是三次的握手以后就相互确认了连接状态。最后一个完成握手的A在第三次确认输入置高以后，延迟100ms以便同步的另一方B能有时间做好同步前的准备，A设置相关计数器的初始值，然后再次给出一个低电平并将己方的\textbf{同步计数器使能}，B在检测到电平翻转以后也同时使能计数。由于有线连接的延迟基本上可以忽略不计，同步双方完成同步计数。
+%图~\ref{SynWaveLarScale}展示了两个系统同步时的电平对准，从图~\ref{SynWaveSamScale}
+%
+%\begin{figure}[!hbp]
+%\begin{center}
+%\includegraphics[scale = 0.5]{graphic/05312010479.jpg}
+%\caption{ 脑电放大器与无线同步触发器同步时刻波形(大) \label{SynWaveLarScale}}
+%\end{center}
+%\end{figure}
+%
+%\begin{figure}[!hbp]
+%\begin{center}
+%\includegraphics[scale = 0.5]{graphic/05312010478.jpg}
+%\caption{ 脑电放大器与无线同步触发器同步时刻波形(微) \label{SynWaveSamScale}}
+%[上波形为主动发动同步的无线同步触发器，下波形为检测到无线同步触发器上升沿以后也开始同步的放大器输出波形，可以看到初始延迟为一个上升沿的时间，5$\mu$s]
+%\end{center}
+%\end{figure}
+%
+	采用三次握手可以避免一些如图~\ref{noiseDigital}所示的错误信号。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/10.PNG}
+\caption{ 常见数字干扰波形图 \label{noiseDigital}}
+\end{center}
+\end{figure}
+
+\subsection{同步确认}
+由于本系统中的脑电放大器和无线同步触发器还通过无线方式连接，一方面在数据传输前最好能确认无线连接已经建立，另一方面虽然三次握手避免了误同步操作，但是同步的双方终究还是不知道对方的情况，比如A同步了但是B没有同步。由于A是同步发起方，因此在双方完成同步以后令B给A通过无线发送一个信号表明自己确实也完成同步了。这样既确认了无线连接，又确认了双方都已经同步。
+
+\section{数据传输格式与兼容性}
+	从图~\ref{WirelessTriggerSche}可知，数据传输涉及到三个设备：脑电放大器，无线同步触发器和接收数据的计算机，数据主要是脑电EEG信号和刺激事件码。其中的各个系统或者程序都是单独设计的，为了完成他们之间的通信就必须规定数据传输的格式。
+
+	由于脑电放大器的数据格式已经确定，相应的计算机端也有数据接收程序~\cite{Xu2009}，因此新加入的无线同步触发器(Wireless Trigger)就必须兼容之前的数据格式，详细的脑电放大器数据格式参考附录。图~\ref{EEGpacketStruct}展示了部分脑电放大器数据格式。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{graphic/PacketStructure.PNG}
+\caption{ 无线脑电放大器~\cite{Xu2009}数据包帧格式 \label{EEGpacketStruct}}
+\end{center}
+\end{figure}
+
+\newpage
+
+这里需要明确几个概念：
+
+\begin{itemize}
+\item 脑电放大器从本质上而言是实现头皮EEG脑电模拟信号到数字信号的转换，中间加入放大滤波等操作。实现数模转换的数模转换器ADC的精度在本系统中默认为32bit即4字节;
+\item 脑电数据的采集不是一次只采样一个点，通常的脑电放大器会有8到32个导联，也即一个采样时刻会有32个ADC同时记录32个点的模拟信号，这32个点每个点的数据都是4字节的;
+\item 一个采样点的数据定义为该时刻所有导联的数据；举例来说，一个采样点的数据如果为32通道，每通道4字节，那么一个采样点就是$32 \times 4 = 128 $字节数据。
+\item  刺激事件码是与采样点对应的，也即刺激事件码是标记在采样点上的,而不是某一个通道。对应数据包格式可知，每个数据包都包含了每个采样点的通道数和每个通道的字节数以及该包中的采样点的数量，但是并没有为刺激事件码提供存放位置，从包结构也可知，脑电放大器并不是实时发送数据，而是等积累了一定的采样点数据以后才发送。如图~\ref{TriggerPackage}展示了每采样点脑电数据后插入刺激事件通道的结构。
+
+\end{itemize}
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/TriggerPackageStruct.PNG}
+\caption{每采样点两通道EEG数据插入刺激事件通道 \label{TriggerPackage}}
+\end{center}
+\end{figure}
+
+\textbf{添加刺激事件码信号的兼容解决办法:}通过在每个采样点后增加一个和通道有相同字节数的空间存放刺激事件码，解决了为SSVEP应用而设计的无线脑电放大器原数据格式对刺激事件码的存放问题，并且兼容了之前数据格式，计算机端的数据处理程序增加最少的改动。
+
+\subsection{自适应参数数据包格式 \label{sec:adaptativePac}}
+	根据数据包的帧头格式完全可以让脑电放大器无线同步触发器根据数据包的参数自适应的接收数据，但是还是缺少一些信息。为了满足无线同步触发器自适应设计的需要，根据原有的帧包格式增加了一个每通道字节数为0的数据包，其帧格式如图~\ref{AdaptParaPackage} 所示：
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/AdaptativePacketStruct.PNG}
+\caption{自适应参数帧包格式 \label{AdaptParaPackage}}
+[红框表示相对于数据包帧格式有所改动的地方，篮框数据表示没变,图中数据字段表示采样时间数据的高位在前]
+\end{center}
+\end{figure}
+
+\begin{enumerate}
+\item 起始帧两字节:0xF0, 0x0F；
+\item 帧号使用0xFF；
+\item 据类型的高四位仍然是每采样点通道数，但是低四位的每通道采样点数量始终为0，从实际程序设计的角度，很难做到自适应每个通道的字节数量，因此标记该位为0符合实际情况。而在正常收到的包中该4位不能为0，因此\textbf{定义数据包中每通道字节数位0和帧号0xFF作为区别参数帧包与普通数据帧包的标志。}
+\item 数据长度字节给出正常数据帧包中的采样点个数；
+\item 数据字段只有两字节(Bytes)，提供每个数据包对应的采样时间，或者也可以理解为每两个数据包之间的发送间隔时间(这两个时间应该是一样的或者近似的)，以0.1ms为单位，即如果该两个字段为十进制的400(十六进制为0x190)，则表示每个数据包包含40ms的采样点数据，再根据之前得到的每个包数据长度字节，就可以计算出放大器端的采样速率，这个参数在自适应的无线同步触发器中正确插入刺激事件码非常重要。
+\end{enumerate}
+
+\section{刺激事件码(Marker Code或Trigger)标记}
+	刺激事件码是通过并口接收的，通常的数据长度为一个字节，实际发送的刺激事件码通常为1位(bit)，接收到的数据为0x10或者0x40等。按照前述会在每个采样点后增加一个数据通道存放刺激事件码。
+
+\subsection{同步计数值与数据包帧号映射模型}
+	如何将记录到的Trigger标记到原有的放大器数据上？原有的数据帧格式并没有为每个采样点提供时间信息。为此建立了一个无线同步触发器的同步计数值与脑电EEG数据数据包帧号FrameID之间的映射关系。
+
+如图~\ref{CorrespondingFIDCounter}所示： {\textcircled{\small{1}}}时刻表示同步双方刚完成同步其Counter都为0，横轴为时间，每两条纵线之间的时间间隔是脑电放大器一个数据包包含的采样时间，记为t；在该ERP无线同步协议中，规定了每个FrameID对应的时间段：FrameID = 0的包对应的是 {\textcircled{\small{1}}}到 {\textcircled{\small{2}}}的时间内的采样数据，即同步之后的第一个时间段对应FrameID为0的数据包，后面的FrameID以此类推。当无线同步触发器(在这里以A表示)接收到FrameID=0的数据包时，就认为这个数据包对应 {\textcircled{\small{1}}}到 {\textcircled{\small{2}}}的时间段内的数据，以每个包40ms长，采样速率1KHz为例，同步以后40ms内的40个点的采样数据打包发送给无线同步触发器，无线同步触发器发现这个包的Frame ID为0，于是得出其对应的同步计数值范围是从0到400(0.1ms精度)，于是就去记录刺激事件信号的数组中寻找计数值是在该范围内的数据。如果有刺激事件的记录时间(其记录时的同步计数值)是在0到400的范围内，则根据每个包的采样点数量计算出每个采样点对应的计数值数量，比如400个计数值对应于40个数据包(1KHz采样)，因此一个采样点对应10个计数值，再经过相关运算就可以得出需要插入刺激事件信号的采样点值。
+
+\begin{figure}[!hbp]
+\begin{center}
+\includegraphics[width=\textwidth]{graphic/CounterSynch.PNG}
+\caption{ 帧号Frame ID与同步计数值映射关系图 \label{CorrespondingFIDCounter}}
+\end{center}
+\end{figure}
+
+\subsection{帧号溢出}
+	从实际的无线脑电放大器的数据格式中可知，FrameID是用一个字节表示的，也即当FrameID = 0xFF以后，下一个FrameID = 0, 此时上述模型的数据对应关系就会出错。为了解决这个字长效应的问题，在系统计数中额外增加了一个16bit的两字节每当FrameID从0xFF到0x00循环时就加1，每次在计算FrameID帧号对应的同步计数值时将该16bit作为FrameID的高位使用。
+
+此外， 同步计数器使用一个4字节32bit的寄存器存储。该值最大的表示范围，经计算为
+\begin{equation}
+\frac{2^{32}}{10000 \times 60 \times 60 \times 24} = 4.97 \quad days
+\end{equation}
+因此在一般记录情况下不会出现溢出的情况。
+

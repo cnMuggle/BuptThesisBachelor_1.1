@@ -1,0 +1,51 @@
+%Demo Package by Gaofeng Fan@bupt
+\ProvidesPackage{BUPTthesisBachelor}
+
+%网上说的将文献以上标形式出现,成功,可选参数有好几个，没记住...
+\makeatletter
+\def\@cite#1#2{\textsuperscript{[{#1\if@tempswa , #2\fi}]}}
+\makeatother
+
+% 增加目录大写罗马,可用参数(arabic, alph, Alph, roman, Roman)
+\makeatletter
+\renewcommand\frontmatter[1]{%
+   \cleardoublepage
+ \@mainmatterfalse
+ \pagenumbering{#1}}
+\makeatother
+
+
+%字体设置宏包
+%\usepackage{fontspec} 
+%\setmainfont[BoldFont=Adobe Heiti Std]{Times New Roman}
+
+%\setmainfont[BoldFont=SimHei]{Times New Roman}
+%\usepackage{mathptmx} %这个宏包使用后没有粗体
+
+\CTEXoptions[today=big,contentsname={目\qquad 录},bibname={\textbf\heiti\zihao{3}参考文献}]
+\CTEXsetup[format={\heiti\zihao{3}\bfseries\centering},nameformat={\bfseries},titleformat={\bfseries}]{chapter}
+\CTEXsetup[format={\heiti\zihao{4}\bfseries\raggedright}]{section}
+\CTEXsetup[format={\heiti\zihao{-4}\bfseries\raggedright},indent={2em}]{subsection}
+\CTEXindent
+
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+%\usepackage[xetex]{color,graphicx}
+%\usepackage[xetex]{color}
+
+%设置页眉页脚的宏包
+\usepackage{fancyhdr}
+\lhead{}
+\chead{\songti\zihao{-5}北京邮电大学本科毕业设计(论文)}
+\rhead{}
+\lfoot{}
+\rfoot{}
+\cfoot{\thepage}
+
+\setlength{\baselineskip}{20pt}  %设置行间距
+
+\makeatletter
+\renewcommand \thefigure{\thechapter-\@arabic\c@figure}%改变图编号的形式
+\renewcommand \thetable{\thechapter-\@arabic\c@table}%改变表格编号的形式
+\renewcommand \theequation{\thechapter-\@arabic\c@equation}%改变表格编号的形式
+\makeatother
+
